@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>喝水提醒</title>
+<style>
+  html,body{margin:0;height:100%;background:transparent;overflow:hidden;font-family:-apple-system,"PingFang SC",sans-serif;-webkit-user-select:none;user-select:none;}
+  #win{width:340px;height:620px;background:#FBF7F0;border-radius:20px;overflow:hidden;position:relative;box-shadow:0 8px 32px rgba(61,52,46,.14);}
+  #top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 4px;}
+  #top .l{display:flex;align-items:center;gap:8px;}
+  #top .t{font-size:16px;font-weight:600;color:#3D342E;}
+  #date{font-size:12px;color:#7A6E62;}
+  .ic{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#9A8E7E;}
+  .ic:hover{background:#F0E8DA;}
+  #cupwrap{display:flex;justify-content:center;margin-top:8px;position:relative;}
+  #numwrap{text-align:center;margin-top:6px;line-height:1;}
+  #num{font-size:52px;font-weight:700;color:#3D342E;display:inline;}
+  #unit{font-size:19px;font-weight:500;color:#9A8E7E;margin-left:2px;display:inline;}
+  #sub{text-align:center;font-size:14px;color:#7A6E62;margin-top:6px;}
+  #track{position:relative;width:260px;height:32px;margin:14px auto 0;}
+  #track .bar{position:absolute;left:12px;right:12px;top:15px;height:6px;border-radius:9999px;background:#F2ECE1;}
+  #fill{position:absolute;left:12px;top:15px;height:6px;border-radius:9999px;background:#0E7CBE;width:0;transition:width .45s cubic-bezier(.4,0,.2,1);}
+  .node{position:absolute;top:2px;width:28px;height:28px;border-radius:9999px;background:#F2ECE1;display:flex;align-items:center;justify-content:center;transition:all .3s;}
+  #labels{display:flex;justify-content:space-between;width:260px;margin:6px auto 0;font-size:12px;color:#7A6E62;}
+  #drinkbtn{display:block;height:46px;width:260px;margin:28px auto 0;border:none;border-radius:9999px;background:#0E7CBE;color:#fff;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(14,124,190,.22);}
+  #drinkbtn:hover{background:#0C6DA8;transform:translateY(-1px);box-shadow:0 6px 16px rgba(14,124,190,.28);}
+  #drinkbtn:active{transform:scale(.97);}
+  /* 达标态：还能点，但不再是催人的主色块 */
+  #drinkbtn.calm{background:#F2ECE1;color:#7A6E62;box-shadow:none;}
+  #drinkbtn.calm:hover{background:#E9E1D3;color:#3D342E;transform:none;box-shadow:none;}
+  #subDrinkRow{display:flex;justify-content:center;gap:10px;margin-top:20px;}
+  .subpill{height:36px;padding:0 16px;border-radius:9999px;border:none;background:#F2ECE1;color:#3D342E;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;}
+  .subpill:hover{background:#E3F2FB;color:#0E7CBE;}
+  .subpill:active{transform:scale(.97);}
+  #bottomRow{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:24px;min-height:34px;}
+  @keyframes undoIn{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
+  #undoBtn{border:1px solid #E7DECF;background:#FEFDFB;color:#7A6E62;font-size:13px;cursor:pointer;font-family:inherit;padding:7px 14px;border-radius:9999px;display:none;align-items:center;gap:5px;flex-shrink:0;animation:undoIn .3s ease;}
+  #undoBtn:hover{color:#0E7CBE;border-color:#0E7CBE;background:#F0F8FC;}
+  #undoBtn:active{transform:scale(.97);}
+  #next{font-size:13px;color:#7A6E62;flex-shrink:0;}
+  #toast{position:absolute;top:8px;left:20px;right:20px;background:#E4F6EE;color:#1E7A54;font-size:13px;font-weight:600;text-align:center;padding:8px 12px;border-radius:10px;transform:translateY(-140%);transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:5;}
+  #toast.show{transform:translateY(0);}
+  @keyframes wm{from{transform:translateX(0)}to{transform:translateX(-80px)}}
+  #wave1{animation:wm 2800ms linear infinite;} #wave2{animation:wm 3400ms linear infinite;}
+  @media (prefers-reduced-motion:reduce){#wave1,#wave2{animation:none}}
+
+  #mlMask{position:absolute;inset:0;background:rgba(45,35,25,.28);display:none;align-items:flex-end;justify-content:center;z-index:20;border-radius:20px;}
+  #mlSheet{width:100%;background:#FEFCF8;border-radius:18px 18px 20px 20px;padding:16px 18px 18px;box-sizing:border-box;box-shadow:0 -6px 20px rgba(61,52,46,.15);}
+  #mlTitle{font-size:15px;font-weight:600;color:#3D342E;text-align:center;margin-bottom:12px;}
+  #mlPickWrap{position:relative;height:180px;display:flex;justify-content:center;}
+  #mlCol{position:relative;height:180px;width:120px;overflow-y:scroll;scroll-snap-type:y mandatory;-ms-overflow-style:none;scrollbar-width:none;z-index:1;}
+  #mlCol::-webkit-scrollbar{display:none;}
+  #mlCol .pad{height:72px;}
+  #mlCol .n{scroll-snap-align:center;height:36px;line-height:36px;text-align:center;font-size:22px;color:#A89C8E;transition:color .15s,transform .15s;cursor:pointer;}
+  #mlCol .n.act{color:#0E7CBE;font-weight:700;transform:scale(1.06);}
+  /* 用户在手输时，滚轮高亮退成灰色，避免两个数字同时像「选中」 */
+  #mlCol.typing .n.act{color:#A89C8E;font-weight:400;transform:none;}
+  #mlBand{position:absolute;left:20px;right:20px;top:72px;height:36px;pointer-events:none;background:rgba(14,124,190,.06);border-top:0.5px solid #E7DECF;border-bottom:0.5px solid #E7DECF;border-radius:8px;}
+  #mlInputRow{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:10px;}
+  #mlManual{width:80px;height:34px;border:1.5px solid #E7DECF;border-radius:10px;text-align:center;font-size:16px;font-family:inherit;background:#FEFDFB;color:#3D342E;outline:none;-moz-appearance:textfield;}
+  #mlManual::-webkit-inner-spin-button,#mlManual::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+  #mlManual:focus{border-color:#0E7CBE;}
+  .mlHint{font-size:13px;color:#A89C8E;}
+  #mlErr{height:16px;margin-top:6px;text-align:center;font-size:12px;color:#B94A3A;visibility:hidden;}
+  #mlErr.show{visibility:visible;}
+  #mlBtns{display:flex;gap:10px;margin-top:14px;}
+  #mlBtns button{flex:1;height:38px;border:none;border-radius:9999px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
+  #mlCancel{background:#F2ECE1;color:#7A6E62;}
+  #mlOk{background:#0E7CBE;color:#fff;}
+</style>
+</head>
+<body>
+<div id="win">
+  <div id="toast">新的一天，喝起来</div>
+  <div id="top" data-tauri-drag-region>
+    <div class="l" data-tauri-drag-region>
+      <img src="logo.png" width="26" height="26" alt="" style="object-fit:contain;display:block;" />
+      <span class="t">今天</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:2px;">
+      <span id="date" style="margin-right:6px;"></span>
+      <div class="ic" id="petBtn" title="显示 / 隐藏柚柚"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="4"/><path d="M6 20c1-3 3.5-4 6-4s5 1 6 4"/><circle cx="12" cy="4" r="1.5" fill="currentColor"/></svg></div>
+      <div class="ic" id="gear" title="设置"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+      <div class="ic" id="close" title="关闭"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></div>
+    </div>
+  </div>
+
+  <div id="cupwrap">
+    <svg viewBox="0 0 140 232" width="125">
+      <defs>
+        <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7FCEF0"/><stop offset="1" stop-color="#3AA7E0"/></linearGradient>
+        <clipPath id="gclip"><path d="M20 26 H120 L112 214 H28 Z"/></clipPath>
+        <radialGradient id="lemonBody" cx="0.42" cy="0.4" r="0.65"><stop offset="0" stop-color="#FDE9A8"/><stop offset="0.7" stop-color="#F7CE52"/><stop offset="1" stop-color="#EDB833"/></radialGradient>
+      </defs>
+      <ellipse cx="70" cy="220" rx="48" ry="7" fill="#EFE1C6" opacity="0.5"/>
+      <g clip-path="url(#gclip)">
+        <rect x="18" y="24" width="104" height="196" fill="rgba(127,206,240,0.06)"/>
+        <g id="water" style="transition:transform .4s cubic-bezier(.4,0,.2,1);">
+          <rect x="-40" y="40" width="220" height="320" fill="url(#wg)"/>
+          <path id="wave2" fill="#CDEBFA" opacity="0.55"></path>
+          <path id="wave1" fill="url(#wg)"></path>
+        </g>
+      </g>
+      <path d="M32 30 L38 180" stroke="rgba(255,255,255,0.5)" stroke-width="5" stroke-linecap="round"/>
+      <path id="gline" d="M20 26 H120 L112 214 H28 Z" fill="none" stroke="#E7DECF" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M17 25 H123" stroke="#E7DECF" stroke-width="3" stroke-linecap="round"/>
+      <g fill="none" stroke="#FF8A6B" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M40 140 L25 14 L10 8"/></g>
+      <g transform="rotate(-18 100 24)">
+        <circle cx="100" cy="24" r="22" fill="#F2C233"/>
+        <circle cx="100" cy="24" r="22" fill="none" stroke="#E5A92A" stroke-width="1.3"/>
+        <circle cx="100" cy="24" r="18.6" fill="#FFFDF4"/>
+        <circle cx="100" cy="24" r="15.7" fill="url(#lemonBody)"/>
+        <g stroke="#FFFEF6" stroke-width="1.4" stroke-linecap="round">
+          <line x1="100" y1="24" x2="100" y2="9.3"/><line x1="100" y1="24" x2="100" y2="38.7"/>
+          <line x1="100" y1="24" x2="85.3" y2="24"/><line x1="100" y1="24" x2="114.7" y2="24"/>
+          <line x1="100" y1="24" x2="89.6" y2="13.6"/><line x1="100" y1="24" x2="110.4" y2="13.6"/>
+          <line x1="100" y1="24" x2="89.6" y2="34.4"/><line x1="100" y1="24" x2="110.4" y2="34.4"/>
+        </g>
+        <circle cx="100" cy="24" r="2.5" fill="#FFFDF4"/>
+        <ellipse cx="93.5" cy="16" rx="4.6" ry="3" fill="#FFFFFF" opacity="0.4" transform="rotate(-35 93.5 16)"/>
+      </g>
+    </svg>
+  </div>
+
+  <div id="numwrap"><span id="num">0</span><span id="unit">ml</span></div>
+  <div id="sub">目标2000ml</div>
+
+  <div id="track">
+    <div class="bar"></div><div id="fill"></div>
+    <div class="node" id="n0" style="left:6px;width:12px;height:12px;top:12px;background:#0E7CBE;"></div>
+    <div class="node" id="nHalf" style="left:111px;"></div>
+    <div class="node" id="nGoal" style="right:0;"></div>
+  </div>
+  <div id="labels"><span>起点</span><span>过半</span><span>完成</span></div>
+
+  <button id="drinkbtn">＋ 喝了一杯</button>
+  <div id="subDrinkRow">
+    <button class="subpill" id="halfBtn">半杯 150ml</button>
+    <button class="subpill" id="sipBtn">一小口 50ml</button>
+    <button class="subpill" id="customBtn">自定义</button>
+  </div>
+  <div id="bottomRow">
+    <button id="undoBtn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7"/></svg>刚才点错了</button>
+    <span id="next">下次喝水 --:--</span>
+  </div>
+
+  <div id="mlMask">
+    <div id="mlSheet">
+      <div id="mlTitle">自定义饮水量</div>
+      <div id="mlPickWrap">
+        <div id="mlCol"></div>
+        <div id="mlBand"></div>
+      </div>
+      <div id="mlInputRow">
+        <span class="mlHint">或直接输入</span>
+        <input type="number" id="mlManual" min="10" max="2000" value="200" />
+        <span class="mlHint">ml</span>
+      </div>
+      <div id="mlErr">请输入 10 到 2000 之间的数字</div>
+      <div id="mlBtns">
+        <button id="mlCancel">取消</button>
+        <button id="mlOk">确定</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const { invoke } = window.__TAURI__.core;
+  const { listen } = window.__TAURI__.event;
+  const water=document.getElementById('water'), w1=document.getElementById('wave1'), w2=document.getElementById('wave2');
+  const numEl=document.getElementById('num'), sub=document.getElementById('sub'), fill=document.getElementById('fill');
+  const nHalf=document.getElementById('nHalf'), nGoal=document.getElementById('nGoal'), gline=document.getElementById('gline');
+  const nextEl=document.getElementById('next'), drinkbtn=document.getElementById('drinkbtn');
+  const halfBtn=document.getElementById('halfBtn'), sipBtn=document.getElementById('sipBtn');
+  const RANGE=172, REF=34;
+  let currentCupMl=300;
+  function wave(refY,amp,wl,phase,x0,x1,botY){let d='M'+x0+' '+botY+' L'+x0+' '+refY;for(let x=x0;x<=x1;x+=4){d+=' L'+x+' '+(refY+amp*Math.sin(x/wl*2*Math.PI+phase)).toFixed(2);}return d+' L'+x1+' '+botY+' Z';}
+  w1.setAttribute('d',wave(REF,3,80,0,-40,200,120));
+  w2.setAttribute('d',wave(REF-1,3,80,Math.PI,-40,200,70));
+  function yuzu(el,lit){ el.style.background = lit ? '#FDE7C0' : '#F2ECE1'; el.innerHTML = lit ? '<svg width="15" height="15" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8" fill="#F4A93B"/><path d="M14 5 q4 -3 7 -1 q-2 4 -6 3z" fill="#7CB342"/></svg>' : '<svg width="13" height="13" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8" fill="none" stroke="#D8CDB8" stroke-width="2"/></svg>'; }
+  const dateEl=document.getElementById('date');
+  const d=new Date(); dateEl.textContent=(d.getMonth()+1)+'月'+d.getDate()+'日';
+
+  function render(s){
+    currentCupMl=s.cupMl||300;
+    const count=s.count||0, totalMl=s.totalMl||0, dailyGoalMl=s.dailyGoalMl||2000;
+    const halfMl=Math.floor(dailyGoalMl/2);
+    const f=Math.min(totalMl,dailyGoalMl)/dailyGoalMl;
+    water.style.transform='translateY('+((1-f)*RANGE).toFixed(1)+'px)';
+    numEl.textContent=totalMl;
+    const done=totalMl>=dailyGoalMl;
+    if(done){
+      sub.innerHTML='<span style="color:#2FB07C;font-weight:600">今天喝得很足</span>';
+    } else if(count===0){
+      sub.textContent='目标'+dailyGoalMl+'ml';
+    } else {
+      sub.textContent='喝了'+count+'次 · 还差'+(dailyGoalMl-totalMl)+'ml';
+    }
+    fill.style.width=(f*236)+'px';
+    yuzu(nHalf, totalMl>=halfMl); yuzu(nGoal, done);
+    gline.setAttribute('stroke', done?'#2FB07C':'#E7DECF');
+    const ub=document.getElementById('undoBtn');
+    ub.style.display='inline-flex';
+    ub.disabled=count===0;
+    ub.style.opacity=count>0?'1':'0.35';
+    ub.style.pointerEvents=count>0?'auto':'none';
+    // 达标后主按钮退成低调样式：喝够了就不该再拿个大蓝按钮催人
+    drinkbtn.classList.toggle('calm', done);
+    drinkbtn.textContent = done
+      ? '再来一杯（'+currentCupMl+'ml）'
+      : '＋ 喝了一杯（'+currentCupMl+'ml）';
+    halfBtn.textContent='半杯 '+Math.round(currentCupMl/2)+'ml';
+    // 后端给的是纯时间就补前缀，是整句话就原样显示，避免出现光秃秃一个 15:30
+    const label = s.nextLabel || '--:--';
+    nextEl.textContent = /^\d{1,2}:\d{2}$|^--:--$/.test(label) ? '下次喝水 ' + label : label;
+  }
+
+  drinkbtn.addEventListener('click',()=> invoke('drink',{ml:currentCupMl}));
+  halfBtn.addEventListener('click',()=> invoke('drink',{ml:Math.round(currentCupMl/2)}));
+  sipBtn.addEventListener('click',()=> invoke('drink',{ml:50}));
+  document.getElementById('undoBtn').addEventListener('click',()=> invoke('undo_drink'));
+  document.getElementById('gear').addEventListener('click', async ()=>{
+    await invoke('hide_window',{label:'main'});
+    await invoke('show_window',{label:'settings'});
+  });
+  document.getElementById('close').addEventListener('click',()=> invoke('hide_window',{label:'main'}));
+  document.getElementById('petBtn').addEventListener('click',()=> invoke('toggle_pet_visible'));
+  const toast=document.getElementById('toast');
+  let toastT;
+  function showToast(text){ toast.textContent=text; toast.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>toast.classList.remove('show'),2400); }
+
+  // 自定义饮水量滚动选择器
+  const ML_VALUES=[50,100,150,200,250,300,350,400,450,500,600,700,800,900,1000];
+  const mlCol=document.getElementById('mlCol'), mlManual=document.getElementById('mlManual'), mlMask=document.getElementById('mlMask'), mlErr=document.getElementById('mlErr');
+  mlCol.innerHTML='<div class="pad"></div>'+ML_VALUES.map(v=>'<div class="n" data-v="'+v+'">'+v+'</div>').join('')+'<div class="pad"></div>';
+  // 滚轮只在用户亲手滚它的时候才回写输入框。
+  // 开面板时的程序化滚动、以及用户正在手输时都不回写，否则会把用户的值冲掉。
+  let mlWheelDriving=false;
+  function mlMarkActive(){
+    const idx=Math.round(mlCol.scrollTop/36);
+    mlCol.querySelectorAll('.n').forEach((el,i)=>el.classList.toggle('act',i===idx));
+    if(mlWheelDriving&&idx>=0&&idx<ML_VALUES.length) mlManual.value=ML_VALUES[idx];
+  }
+  mlCol.addEventListener('scroll',()=>mlMarkActive());
+  ['pointerdown','wheel','touchstart'].forEach(ev=>
+    mlCol.addEventListener(ev,()=>{ mlWheelDriving=true; mlCol.classList.remove('typing'); mlManual.blur(); },{passive:true}));
+  // 点数字直接选中它（原来有手型光标却点不动）
+  mlCol.addEventListener('click',(e)=>{
+    const n=e.target.closest('.n'); if(!n) return;
+    mlWheelDriving=true; mlManual.blur();
+    mlCol.scrollTo({top:ML_VALUES.indexOf(+n.dataset.v)*36,behavior:'smooth'});
+  });
+  mlManual.addEventListener('focus',()=>{ mlWheelDriving=false; });
+  let lastCustomMl=200;
+  document.getElementById('customBtn').addEventListener('click',()=>{
+    mlMask.style.display='flex';
+    mlErr.classList.remove('show'); mlManual.style.borderColor='';
+    mlWheelDriving=false; // 复位，别让上次滚轮状态把这次恢复的值冲掉
+    mlCol.classList.remove('typing');
+    let idx=ML_VALUES.indexOf(lastCustomMl);
+    if(idx<0){ let min=Infinity; ML_VALUES.forEach((v,i)=>{ if(Math.abs(v-lastCustomMl)<min){min=Math.abs(v-lastCustomMl);idx=i;} }); }
+    mlManual.value=lastCustomMl;
+    requestAnimationFrame(()=>{ mlCol.scrollTop=idx*36; mlMarkActive(); });
+  });
+  document.getElementById('mlCancel').addEventListener('click',()=>{ mlMask.style.display='none'; });
+  mlMask.addEventListener('click',(e)=>{ if(e.target===mlMask) mlMask.style.display='none'; });
+  document.getElementById('mlOk').addEventListener('click',()=>{
+    const v=Math.round(parseFloat(mlManual.value))||0; // 小数四舍五入，不是截断
+    if(v>=10&&v<=2000){
+      mlManual.value=v; // 回写，让用户看到实际记的是多少
+      mlErr.classList.remove('show'); mlManual.style.borderColor='';
+      lastCustomMl=v; invoke('drink',{ml:v}); mlMask.style.display='none';
+    } else {
+      // 不静默失败：告诉用户为什么点了没反应
+      mlErr.classList.add('show'); mlManual.style.borderColor='#E7A99C';
+    }
+  });
+  mlManual.addEventListener('input',()=>{
+    mlErr.classList.remove('show'); mlManual.style.borderColor='';
+    mlCol.classList.add('typing'); // 手输时弱化滚轮高亮，一眼看出现在谁说了算
+  });
+  mlManual.addEventListener('keydown',(e)=>{ if(e.key==='Enter') document.getElementById('mlOk').click(); });
+  // Esc 挂在 document 上：碰过滚轮后输入框会失焦，挂输入框上会失灵
+  document.addEventListener('keydown',(e)=>{
+    if(e.key==='Escape' && mlMask.style.display==='flex') mlMask.style.display='none';
+  });
+
+  listen('updated', e=> render(e.payload));
+  (async()=>{ try{ const s=await invoke('get_snapshot'); render(s); if(s.dayJustReset && s.count===0) setTimeout(()=>showToast('新的一天，喝起来'),400); }catch(e){} })();
+</script>
+</body>
+</html>

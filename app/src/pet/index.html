@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>喝水搭子</title>
+<style>
+  html,body{margin:0;height:100%;background:transparent;overflow:hidden;font-family:-apple-system,"PingFang SC",sans-serif;-webkit-user-select:none;user-select:none;}
+  #wrap{position:relative;width:240px;height:260px;}
+  #petbox{position:absolute;left:52px;bottom:2px;width:150px;height:178px;background:rgba(255,255,255,0.02);border-radius:22px;cursor:grab;animation:breathe 3.4s ease-in-out infinite;transform-origin:center bottom;}
+  #petbox:active{cursor:grabbing;}
+  #petbox.hop{animation:hop .6s ease !important;}
+  #petsvg{width:150px;height:auto;display:block;margin:0 auto;pointer-events:none;}
+  #petimg{width:150px;height:auto;display:none;margin:0 auto;pointer-events:none;}
+  @keyframes breathe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-2px) scale(1.015)}}
+  @keyframes blink{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+  @keyframes hop{0%{transform:translateY(0)}30%{transform:translateY(-16px)}60%{transform:translateY(0)}100%{transform:translateY(0)}}
+  @keyframes wigg{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+  @keyframes zf{0%{opacity:0;transform:translate(0,0) scale(.7)}25%{opacity:.9}100%{opacity:0;transform:translate(8px,-16px) scale(1)}}
+  @keyframes sway{0%,100%{transform:rotate(0)}25%{transform:rotate(-5deg)}75%{transform:rotate(5deg)}}
+  @keyframes tilt{0%,100%{transform:rotate(0)}45%{transform:rotate(-10deg)}}
+  @keyframes spin{0%,100%{transform:rotate(0)}25%{transform:rotate(-14deg)}75%{transform:rotate(14deg)}}
+  #petbox.sway{animation:sway 1.3s ease-in-out !important;}
+  #petbox.tilt{animation:tilt 1.3s ease-in-out !important;}
+  #petbox.spin{animation:spin .5s ease-in-out 2 !important;}
+  @keyframes sparkleF{0%{opacity:0;transform:scale(.4)}30%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.3)}}
+  .eyeG{transform-box:fill-box;transform-origin:center;animation:blink 4.6s infinite;}
+  .st-alert #petbox{animation:wigg .5s ease-in-out infinite;}
+  .zz{animation:zf 2.2s ease-in-out infinite;} .zz:nth-child(2){animation-delay:.7s} .zz:nth-child(3){animation-delay:1.4s}
+
+  @keyframes bubbleIn{0%{opacity:0;transform:translateY(8px) scale(.92)}100%{opacity:1;transform:translateY(0) scale(1)}}
+  #bubble{position:absolute;left:12px;top:4px;width:216px;background:#FFFDF7;
+    border:1.5px solid #EBDCC2;border-radius:18px;
+    box-shadow:0 8px 22px rgba(150,120,80,.16), 0 2px 5px rgba(150,120,80,.10);
+    padding:13px 15px 14px;display:none;box-sizing:border-box;z-index:8;
+    animation:bubbleIn .24s cubic-bezier(.34,1.56,.64,1);}
+  #btext{font-size:14.5px;font-weight:600;color:#6B5645;margin-bottom:11px;line-height:1.5;letter-spacing:.2px;}
+  #bubble.onb #btext{padding-right:30px;}
+  .brow{display:flex;gap:8px;}
+  .bbtn{flex:1;height:35px;border:none;border-radius:9999px;font-size:13.5px;cursor:pointer;font-family:inherit;white-space:nowrap;padding:0 8px;transition:transform .12s,filter .12s;}
+  .bbtn:hover{filter:brightness(1.05);}
+  .bbtn:active{transform:scale(.96);}
+  .bmain{background:#69BEE4;color:#fff;font-weight:600;box-shadow:0 2px 6px rgba(105,190,228,.4);}
+  .balt{background:#F6EFE2;color:#8A7A66;}
+  .bopts{display:none;flex-direction:column;gap:7px;}
+  .bopt{height:38px;border:1.5px solid #EBDCC2;background:#FFFDF7;border-radius:12px;font-size:13.5px;
+    color:#6B5645;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:space-between;
+    padding:0 14px;transition:border-color .12s,background .12s,transform .1s;}
+  .bopt:hover{border-color:#69BEE4;background:#F3FAFD;}
+  .bopt:active{transform:scale(.97);}
+  .bopt .ov{color:#A79781;font-size:12px;}
+  #onbSkip{position:absolute;top:9px;right:12px;border:none;background:none;color:#B3A48C;font-size:12px;
+    cursor:pointer;font-family:inherit;padding:2px 4px;display:none;z-index:2;}
+  #onbSkip:hover{color:#8A7A66;}
+  #onbDots{display:none;justify-content:center;gap:6px;margin-top:11px;}
+  #onbDots .dot{width:6px;height:6px;border-radius:9999px;background:#E7DAC0;transition:width .2s,background .2s;}
+  #onbDots .dot.on{width:15px;background:#69BEE4;}
+  #btip{position:absolute;left:98px;bottom:-9px;width:16px;height:16px;background:#FFFDF7;
+    border-right:1.5px solid #EBDCC2;border-bottom:1.5px solid #EBDCC2;
+    transform:rotate(45deg);border-radius:0 0 5px 0;}
+  #drops{position:absolute;left:120px;top:150px;display:none;z-index:6;}
+
+  #celebrate{position:absolute;left:60px;top:32px;width:140px;height:60px;display:none;pointer-events:none;z-index:7;}
+  #celebrate.on{display:block;}
+  .spk{animation:sparkleF 1.4s ease forwards;}
+  .spk:nth-child(2){animation-delay:.15s;} .spk:nth-child(3){animation-delay:.3s;} .spk:nth-child(4){animation-delay:.45s;}
+
+  /* 头顶彩虹是菜单入口，鼠标放上去发个光，提示这里能点 */
+  #headHit{position:absolute;right:0;top:0;width:52px;height:42px;cursor:pointer;z-index:5;}
+  /* 睡觉标记：画在图片外面，静态图也能显示状态 */
+  #sleepMark{position:absolute;left:168px;bottom:130px;display:none;color:#7E97A3;font-weight:700;z-index:6;pointer-events:none;text-shadow:0 1px 2px rgba(255,255,255,.9);}
+  @media (prefers-reduced-motion:reduce){#petsvg,.eyeG,.zz{animation:none!important}}
+  #wrap.retracted #petbox{left:-40px!important;animation:peekAnim 4s ease-in-out infinite!important;}
+  #wrap.retracted #bubble,#wrap.retracted #celebrate,#wrap.retracted #sleepMark{display:none!important;}
+  @keyframes peekAnim{0%,75%,100%{transform:translateX(0) scale(0.92);}35%{transform:translateX(14px) scale(0.92);}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="bubble">
+    <button id="onbSkip">跳过</button>
+    <div id="btext">该喝水啦</div>
+    <div class="brow" id="brow">
+      <button class="bbtn bmain" id="bmain">喝了</button>
+      <button class="bbtn balt" id="balt">待会儿</button>
+    </div>
+    <div class="bopts" id="bopts"></div>
+    <div id="onbDots"></div>
+    <div id="btip"></div>
+  </div>
+
+  <div id="celebrate">
+    <svg viewBox="0 0 140 60" width="140" height="60">
+      <path d="M20 42 Q70 8 120 42" fill="none" stroke="#F4A79A" stroke-width="4" stroke-linecap="round"/>
+      <path d="M22 46 Q70 14 118 46" fill="none" stroke="#F6D06A" stroke-width="4" stroke-linecap="round"/>
+      <path d="M24 50 Q70 20 116 50" fill="none" stroke="#8ECFA0" stroke-width="4" stroke-linecap="round"/>
+      <path d="M26 54 Q70 26 114 54" fill="none" stroke="#8FC5EA" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+    <svg style="position:absolute;left:118px;top:6px" width="14" height="14" viewBox="0 0 20 20" class="spk"><path d="M10 1 L12 8 L19 10 L12 12 L10 19 L8 12 L1 10 L8 8 Z" fill="#F6D06A"/></svg>
+    <svg style="position:absolute;left:2px;top:2px" width="10" height="10" viewBox="0 0 20 20" class="spk"><path d="M10 1 L12 8 L19 10 L12 12 L10 19 L8 12 L1 10 L8 8 Z" fill="#F6D06A"/></svg>
+    <svg style="position:absolute;left:60px;top:0" width="10" height="10" viewBox="0 0 20 20" class="spk"><path d="M10 1 L12 8 L19 10 L12 12 L10 19 L8 12 L1 10 L8 8 Z" fill="#F4A79A"/></svg>
+    <svg style="position:absolute;left:130px;top:36px" width="9" height="9" viewBox="0 0 20 20" class="spk"><path d="M10 1 L12 8 L19 10 L12 12 L10 19 L8 12 L1 10 L8 8 Z" fill="#8FC5EA"/></svg>
+  </div>
+
+  <div id="sleepMark">
+    <span class="zz" style="position:absolute;font-size:12px;">z</span>
+    <span class="zz" style="position:absolute;left:9px;top:-9px;font-size:15px;">z</span>
+    <span class="zz" style="position:absolute;left:20px;top:-20px;font-size:19px;">Z</span>
+  </div>
+
+  <div id="petbox" data-tauri-drag-region>
+    <div id="headHit"></div>
+    <img id="petimg" src="pet.png" alt="" />
+    <svg id="petsvg" viewBox="0 0 200 220">
+      <ellipse cx="100" cy="208" rx="52" ry="7" fill="#C7B79A" opacity="0.28"/>
+
+      <!-- 小脚 -->
+      <ellipse cx="72" cy="196" rx="14" ry="10" fill="#FDFBF3" stroke="#B98C58" stroke-width="2.4"/>
+      <ellipse cx="128" cy="196" rx="14" ry="10" fill="#FDFBF3" stroke="#B98C58" stroke-width="2.4"/>
+
+      <!-- 黄色披风 -->
+      <path d="M 42 128 Q 70 150 100 150 Q 130 150 158 128 L 168 194 Q 100 208 32 194 Z"
+            fill="#FBEBA1" stroke="#B98C58" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M 92 150 L 100 178 L 108 150" fill="none" stroke="#B98C58" stroke-width="1.6" opacity="0.55"/>
+
+      <!-- 小手 -->
+      <ellipse cx="50" cy="146" rx="10" ry="9" fill="#FDFBF3" stroke="#B98C58" stroke-width="2.2"/>
+      <ellipse cx="150" cy="146" rx="10" ry="9" fill="#FDFBF3" stroke="#B98C58" stroke-width="2.2"/>
+
+      <!-- 蓬松身子（云朵轮廓，多个弧度拼出蓬蓬感） -->
+      <path d="M 100 30
+               C 78 26, 58 34, 52 54
+               C 34 54, 24 74, 34 92
+               C 22 100, 24 122, 42 128
+               C 55 138, 145 138, 158 128
+               C 176 122, 178 100, 166 92
+               C 176 74, 166 54, 148 54
+               C 142 34, 122 26, 100 30 Z"
+            fill="#FDFBF3" stroke="#B98C58" stroke-width="2.6" stroke-linejoin="round"/>
+
+      <!-- 脸颊粉团 -->
+      <ellipse cx="62" cy="98" rx="12" ry="7" fill="#F5B7B5" opacity="0.75"/>
+      <ellipse cx="138" cy="98" rx="12" ry="7" fill="#F5B7B5" opacity="0.75"/>
+      <!-- 脸颊小斜纹 -->
+      <g stroke="#D88E8B" stroke-width="1.4" stroke-linecap="round" opacity="0.75">
+        <line x1="55" y1="100" x2="59" y2="100"/>
+        <line x1="61" y1="100" x2="65" y2="100"/>
+        <line x1="67" y1="100" x2="70" y2="100"/>
+        <line x1="130" y1="100" x2="134" y2="100"/>
+        <line x1="136" y1="100" x2="140" y2="100"/>
+        <line x1="142" y1="100" x2="145" y2="100"/>
+      </g>
+
+      <!-- 眼睛 -->
+      <g id="eyes">
+        <ellipse class="eyeG" cx="82" cy="88" rx="4" ry="5.4" fill="#3B2A22"/>
+        <ellipse class="eyeG" cx="118" cy="88" rx="4" ry="5.4" fill="#3B2A22"/>
+      </g>
+      <!-- 小鼻子 -->
+      <circle cx="100" cy="98" r="1.6" fill="#8B6B4A" opacity="0.8"/>
+      <!-- 嘴 -->
+      <g id="mouth">
+        <path d="M 92 104 Q 100 110 108 104" fill="none" stroke="#3B2A22" stroke-width="2" stroke-linecap="round"/>
+      </g>
+
+      <!-- 睡觉时的Z -->
+      <g id="zzz" style="display:none">
+        <text class="zz" x="158" y="46" font-size="12" font-weight="700" fill="#8FA6B0">z</text>
+        <text class="zz" x="166" y="38" font-size="15" font-weight="700" fill="#8FA6B0">z</text>
+        <text class="zz" x="176" y="28" font-size="18" font-weight="700" fill="#8FA6B0">Z</text>
+      </g>
+    </svg>
+  </div>
+</div>
+
+<script>
+  const { invoke } = window.__TAURI__.core;
+  const { listen } = window.__TAURI__.event;
+  const petbox=document.getElementById('petbox'), petsvg=document.getElementById('petsvg');
+  const eyes=document.getElementById('eyes'), mouth=document.getElementById('mouth'), zzz=document.getElementById('zzz');
+  const bubble=document.getElementById('bubble'), btext=document.getElementById('btext'), bmain=document.getElementById('bmain'), balt=document.getElementById('balt'), brow=document.getElementById('brow'), bopts=document.getElementById('bopts'), onbSkip=document.getElementById('onbSkip'), onbDots=document.getElementById('onbDots');
+  const wrap=document.getElementById('wrap'), headHit=document.getElementById('headHit'), celebrate=document.getElementById('celebrate');
+  const nEyes=eyes.innerHTML, nMouth=mouth.innerHTML;
+  const hEyes='<path d="M74 90 q8 -8 16 0" stroke="#3B2A22" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M110 90 q8 -8 16 0" stroke="#3B2A22" stroke-width="3" fill="none" stroke-linecap="round"/>';
+  const hMouth='<path d="M 88 102 Q 100 115 112 102 Z" fill="#F2938C"/>';
+  const sEyes='<path d="M74 88 q8 6 16 0" stroke="#3B2A22" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M110 88 q8 6 16 0" stroke="#3B2A22" stroke-width="2.2" fill="none" stroke-linecap="round"/>';
+
+  let base='idle', reason='', recover='', bubbleOpen=false, happyT, onbStep=-1, retractT=null;
+
+  const sleepMark=document.getElementById('sleepMark');
+  function face(s){
+    // 状态标记画在图片外层，这样即使用的是静态图也看得出状态
+    const sleeping = (s==='sleep');
+    sleepMark.style.display = sleeping ? 'block' : 'none';
+    petbox.style.filter = sleeping ? 'saturate(.55) brightness(.94)' : '';
+    // 下面这些只对内置 SVG 生效（没放 pet.png 时的后备形象）
+    if(s==='sleep'){eyes.innerHTML=sEyes;mouth.innerHTML=nMouth;zzz.style.display='';}
+    else if(s==='happy'||s==='goal'){eyes.innerHTML=hEyes;mouth.innerHTML=hMouth;zzz.style.display='none';}
+    else {eyes.innerHTML=nEyes;mouth.innerHTML=nMouth;zzz.style.display='none';}
+  }
+  function setBase(s,r,rec){ base=s; reason=r||''; recover=rec||''; if(!bubbleOpen && onbStep<0) face(s); }
+  function closeBubble(){ bubble.style.display='none'; bubbleOpen=false; wrap.className=''; bubble.dataset.kind=''; bopts.style.display='none'; brow.style.display='flex'; bubble.classList.remove('onb'); onbSkip.style.display='none'; onbDots.style.display='none'; face(base); }
+  function openBubble(text, mainLabel, altLabel, kind){
+    btext.textContent=text; bmain.textContent=mainLabel;
+    if(altLabel){balt.textContent=altLabel;balt.style.display='';} else balt.style.display='none';
+    bubble.dataset.kind=kind||'';
+    bubble.style.display='block'; bubbleOpen=true;
+  }
+  function happy(){ clearTimeout(happyT); closeBubble(); face('happy'); petbox.classList.remove('hop'); void petbox.offsetWidth; petbox.classList.add('hop'); happyT=setTimeout(()=>{petbox.classList.remove('hop');face(base);},1300); }
+  function shake(){ wrap.className='st-alert'; setTimeout(()=>{ if(!bubbleOpen) wrap.className=''; },500); }
+  function celebrateOn(kind){
+    celebrate.classList.remove('on'); void celebrate.offsetWidth;
+    // 重新触发星星动画
+    celebrate.querySelectorAll('.spk').forEach((el,i)=>{ el.style.animation='none'; void el.offsetWidth; el.style.animation='sparkleF 1.4s ease '+(i*.15)+'s forwards'; });
+    celebrate.classList.add('on');
+    setTimeout(()=> celebrate.classList.remove('on'), 2400);
+    const msg = kind==='goal' ? '完成，今天喝够啦～' : '过半啦，继续加油';
+    setTimeout(()=>{ if(!bubbleOpen) { openBubble(msg, '好耶', null, 'milestone'); setTimeout(()=>{ if(bubble.dataset.kind==='milestone') closeBubble(); }, 2600); } }, 400);
+  }
+
+  // 新手引导。petCfg 在启动时从 get_snapshot 填上，选杯子那步要用它存回配置。
+  let petCfg=null;
+  const CUP_OPTS=[
+    {ml:200, name:'小杯', goal:2000},
+    {ml:300, name:'马克杯', goal:2000},
+    {ml:500, name:'大杯', goal:2500},
+  ];
+  const onbSteps = [
+    { text:'嗨，我是柚柚，以后陪你喝水～', main:'继续' },
+    { text:'先告诉我，你平时用多大的杯子？', choice:true },
+    { text:'口渴了就点我身子一下，记一杯水（一杯就是你刚选的那么多）', main:'继续' },
+    { text:'到点我会自己冒出来提醒你，屏幕上也会弹一条通知', main:'继续' },
+    { text:'想改提醒间隔、每天目标、杯子大小，随时去设置里调', main:'继续' },
+    { text:'找不到我时，去屏幕最上面那排点柚柚图标，能打开设置、让我回来', main:'知道啦' },
+  ];
+  function renderOnb(){
+    const s=onbSteps[onbStep];
+    bubble.classList.add('onb');
+    onbSkip.style.display='block';
+    // 进度点
+    onbDots.style.display='flex';
+    onbDots.innerHTML=onbSteps.map((_,i)=>'<span class="dot'+(i===onbStep?' on':'')+'"></span>').join('');
+    if(s.choice){
+      // 选杯子那步：藏掉普通按钮行，铺开三个杯子选项
+      openBubble(s.text, '', null, 'onboard');
+      onbSkip.style.display='block';
+      brow.style.display='none';
+      bopts.style.display='flex';
+      bopts.innerHTML=CUP_OPTS.map(o=>
+        '<button class="bopt" data-ml="'+o.ml+'" data-goal="'+o.goal+'"><span>'+o.name+'</span><span class="ov">'+o.ml+'ml</span></button>'
+      ).join('');
+    } else {
+      bopts.style.display='none'; bopts.innerHTML='';
+      brow.style.display='flex';
+      openBubble(s.text, s.main, null, 'onboard');
+    }
+  }
+  // 收尾：走完或跳过都走这里，标记看过、复位一切
+  function finishOnb(){
+    onbStep=-1;
+    bubble.classList.remove('onb');
+    onbSkip.style.display='none'; onbDots.style.display='none';
+    bopts.style.display='none'; brow.style.display='flex';
+    closeBubble(); invoke('mark_onboarding'); face(base);
+  }
+  function nextOnb(){
+    onbStep++;
+    if(onbStep>=onbSteps.length){ finishOnb(); return; }
+    renderOnb();
+  }
+  function prevOnb(){
+    if(onbStep<=0) return; // 第一步右滑不动
+    onbStep--; renderOnb();
+  }
+  // 选杯子：存回配置再进下一步
+  bopts.addEventListener('click', async (e)=>{
+    const b=e.target.closest('.bopt'); if(!b) return;
+    const ml=+b.dataset.ml, goal=+b.dataset.goal;
+    if(petCfg){
+      petCfg.cupMl=ml; petCfg.dailyGoalMl=goal;
+      try{ await invoke('save_config',{config:petCfg}); }catch(err){}
+    }
+    nextOnb();
+  });
+  // 右上角跳过 = 直接结束引导
+  onbSkip.addEventListener('click',(e)=>{ e.stopPropagation(); finishOnb(); });
+  // 气泡上左右滑动翻页：左滑下一步，右滑上一步
+  let swipeX=null, justSwiped=false;
+  bubble.addEventListener('pointerdown',(e)=>{ if(onbStep>=0){ swipeX=e.clientX; justSwiped=false; } });
+  bubble.addEventListener('pointerup',(e)=>{
+    if(onbStep<0 || swipeX===null) return;
+    const dx=e.clientX-swipeX; swipeX=null;
+    if(dx<-40){ justSwiped=true; nextOnb(); }       // 往左划 → 前进
+    else if(dx>40){ justSwiped=true; prevOnb(); }   // 往右划 → 回退
+  });
+
+  // 点桌宠（头/身都算）：弹打卡气泡。原来的头顶菜单已去掉。
+  let clickCount=0, clickT;
+  petbox.addEventListener('click',(e)=>{
+    if(isRetracted){ invoke('show_window',{label:'main'}); return; }
+    if(onbStep>=0) return;
+    // 连点逗它
+    clickCount++; clearTimeout(clickT); clickT=setTimeout(()=>{clickCount=0;},1500);
+    if(clickCount>=6){ clickCount=0; tease(); return; } // 要连点6下才算逗它，避免跟记水误触
+    // 碎碎念/庆祝气泡不该挡住你记水：直接换成打卡气泡
+    if(bubbleOpen){
+      const k=bubble.dataset.kind;
+      if(k==='chat' || k==='milestone') closeBubble();
+      else return;
+    }
+    if(base==='sleep'){
+      shake();
+      const map={pause:'在休息，'+recover, dnd:'午休中，'+recover, offhours:'下班啦，'+recover};
+      openBubble(map[reason]||'在休息中', '知道了', null, 'sleep');
+    } else {
+      openBubble('该喝水啦', '喝了一杯', '打开面板', 'active');
+    }
+  });
+
+  bmain.addEventListener('click', async (e)=>{
+    e.stopPropagation();
+    const kind=bubble.dataset.kind;
+    if(kind==='onboard'){ if(!justSwiped) nextOnb(); return; } // 滑动已翻页就别再点一次
+    if(kind==='sleep' || kind==='milestone'){ closeBubble(); return; }
+    await invoke('drink');
+  });
+  balt.addEventListener('click', async (e)=>{
+    e.stopPropagation();
+    const kind=bubble.dataset.kind;
+    if(kind==='active'){ await invoke('show_window',{label:'main'}); closeBubble(); }
+    else if(kind==='alert'){ await invoke('snooze'); closeBubble(); } // 待会儿 = 15分钟后再提醒
+    else closeBubble();
+  });
+
+  listen('updated', e=>{ const s=e.payload; setBase(s.petState, s.sleepReason, s.sleepRecoverTime); });
+  listen('pet-alert', ()=>{
+    if(onbStep>=0) return;
+    shake();
+    petbox.classList.remove('hop'); void petbox.offsetWidth; petbox.classList.add('hop');
+    openBubble('该喝水啦','喝了','待会儿','alert');
+  });
+  listen('pet-happy', ()=> happy());
+  listen('pet-milestone', e=> celebrateOn(e.payload && e.payload.kind));
+
+  // ---- 趣味性：碎碎念 + 自己的小动作 + 连点逗它 ----
+  const CHATTER = ['我在呢','今天天气不错呀','你打字好快','有点困了…','记得眨眨眼哦','歇会儿吧',
+                   '水杯还满着吗','我飘一会儿','你今天气色不错','彩虹又出来啦','忙完了叫我'];
+  const TEASE = ['哎呀，痒痒','别戳啦～','转晕了…','再戳我就飘走咯','我在这儿呢，别急'];
+  function idleFree(){ return !bubbleOpen && onbStep<0; }
+  const CHAT_REPLIES=['好嘞','收到','哈哈','嗯嗯','好的','嘻嘻','了解','知道啦'];
+  function sayFor(text, ms){
+    const reply=CHAT_REPLIES[Math.floor(Math.random()*CHAT_REPLIES.length)];
+    openBubble(text, reply, null, 'chat');
+    setTimeout(()=>{ if(bubble.dataset.kind==='chat') closeBubble(); }, ms||4000);
+  }
+  function tease(){
+    petbox.classList.remove('spin'); void petbox.offsetWidth; petbox.classList.add('spin');
+    setTimeout(()=>petbox.classList.remove('spin'), 1100);
+    if(bubbleOpen) closeBubble();
+    sayFor(TEASE[Math.floor(Math.random()*TEASE.length)], 2200);
+  }
+  function idleAction(){
+    if(!idleFree() || base==='sleep') return;
+    const acts=['sway','tilt','hop'];
+    const a=acts[Math.floor(Math.random()*acts.length)];
+    petbox.classList.remove(a); void petbox.offsetWidth; petbox.classList.add(a);
+    setTimeout(()=>petbox.classList.remove(a), 1400);
+  }
+  // 隔一阵自己动一下 / 说一句，不打扰你正在做的事
+  setInterval(()=>{ if(Math.random()<0.6) idleAction(); }, 45000);
+  setInterval(()=>{ if(idleFree() && base!=='sleep' && Math.random()<0.5) sayFor(CHATTER[Math.floor(Math.random()*CHATTER.length)]); }, 90000);
+
+  let isRetracted=false;
+  listen('pet-retract',()=>{ isRetracted=true; wrap.classList.add('retracted'); if(bubbleOpen)closeBubble(); });
+  listen('pet-expand',()=>{ isRetracted=false; wrap.classList.remove('retracted'); });
+
+  petbox.addEventListener('mousedown',()=> invoke('pet_touched'));
+
+  // 若项目里放了 pet.png（你的原图），自动用它替换内置卡通
+  const petimg=document.getElementById('petimg');
+  petimg.addEventListener('load', ()=>{ petsvg.style.display='none'; petimg.style.display='block'; });
+  petimg.addEventListener('error', ()=>{ petimg.style.display='none'; });
+
+  (async ()=>{
+    try{
+      const s = await invoke('get_snapshot');
+      setBase(s.petState, s.sleepReason, s.sleepRecoverTime);
+      // 存一份当前配置，选杯子那步要改 cupMl / dailyGoalMl 再存回去
+      petCfg = { intervalMinutes:s.intervalMinutes, activeStart:s.activeStart, activeEnd:s.activeEnd,
+        cupMl:s.cupMl, dailyGoalMl:s.dailyGoalMl, paused:s.paused, dndEnabled:s.dndEnabled,
+        dndStart:s.dndStart, dndEnd:s.dndEnd, soundEnabled:s.soundEnabled, onboardingShown:s.onboardingShown };
+      if(!s.onboardingShown){ nextOnb(); }
+    }catch(err){ face('idle'); }
+  })();
+</script>
+</body>
+</html>

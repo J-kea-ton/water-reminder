@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>设置</title>
+<style>
+  html,body{margin:0;height:100%;background:transparent;overflow:hidden;font-family:-apple-system,"PingFang SC",sans-serif;-webkit-user-select:none;user-select:none;}
+  #win{width:100%;height:100%;background:#FBF7F0;border-radius:20px;display:flex;flex-direction:column;box-sizing:border-box;position:relative;}
+  #hd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 8px;flex-shrink:0;}
+  #hd .t{font-size:19px;font-weight:700;color:#3D342E;}
+  .ic{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#9A8E7E;}
+  .ic:hover{background:#F0E8DA;}
+  #back{display:flex;align-items:center;gap:4px;padding:6px 12px 6px 8px;border:none;background:transparent;border-radius:9999px;color:#0E7CBE;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
+  #back:hover{background:#E3F2FB;}
+  #scroll{flex:1;overflow-y:auto;padding:0 18px 20px;}
+  #scroll::-webkit-scrollbar{width:6px;} #scroll::-webkit-scrollbar-thumb{background:#E7DECF;border-radius:3px;}
+  .glabel{font-size:12px;color:#7A6E62;margin:12px 4px 6px;}
+  .grp{background:#FEFCF8;border:0.5px solid #E7DECF;border-radius:14px;overflow:hidden;}
+  .row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:0.5px solid #EFE7D9;}
+  .row:last-child{border-bottom:none;}
+  .rlab{font-size:15px;color:#3D342E;font-weight:600;}
+  .rsub{font-size:12px;color:#A89C8E;margin-top:2px;}
+  .pill{height:30px;min-width:46px;padding:0 12px;border-radius:9999px;border:none;background:#F2ECE1;color:#7A6E62;font-size:14px;cursor:pointer;font-family:inherit;transition:all .15s;}
+  .pill.on{background:#0E7CBE;color:#fff;font-weight:600;}
+  .step{width:34px;height:34px;border-radius:9999px;border:0.5px solid #E7DECF;background:#FEFDFB;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s;}
+  .step:active{background:#E3F2FB;}
+  .sval{min-width:70px;text-align:center;font-size:16px;color:#3D342E;font-weight:600;}
+  .tchip{display:flex;align-items:center;gap:6px;padding:6px 12px;border:0.5px solid #E7DECF;border-radius:9999px;background:#FEFDFB;color:#0E7CBE;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .tchip:hover{border-color:#0E7CBE;}
+  .tsep{color:#7A6E62;margin:0 2px;}
+  .sw{width:46px;height:27px;border-radius:9999px;background:#E0D8C8;position:relative;cursor:pointer;transition:background .2s;}
+  .sw.on{background:#0E7CBE;}
+  .knob{position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:9999px;background:#fff;transition:left .2s;box-shadow:0 1px 2px rgba(0,0,0,.2);}
+  .sw.on .knob{left:22px;}
+
+  /* 杯子容量卡片 */
+  .cupgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;}
+  .cupcard{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:14px 0 12px;border-radius:12px;border:1.5px solid #E7DECF;background:#FEFCF8;cursor:pointer;transition:all .18s;}
+  .cupcard:hover{border-color:#C4D7E3;}
+  .cupcard.on{border-color:#0E7CBE;background:rgba(14,124,190,.05);}
+  .cupcard .cv{font-size:17px;font-weight:700;color:#3D342E;transition:color .15s;}
+  .cupcard.on .cv{color:#0E7CBE;}
+  .cupcard .cn{font-size:11px;color:#A89C8E;letter-spacing:.3px;}
+  .cupcard .ci{margin-bottom:2px;}
+
+  /* 目标量预设 */
+  .goalpills{display:flex;gap:7px;justify-content:center;margin-top:12px;flex-wrap:wrap;}
+  .goalhelper{text-align:center;font-size:12px;color:#A89C8E;margin-top:10px;}
+
+  /* 滚动时间选择器 */
+  #mask{position:absolute;inset:0;background:rgba(45,35,25,.28);display:none;align-items:flex-end;justify-content:center;z-index:20;border-radius:20px;}
+  #sheet{width:100%;background:#FEFCF8;border-radius:18px 18px 20px 20px;padding:16px 18px 18px;box-sizing:border-box;box-shadow:0 -6px 20px rgba(61,52,46,.15);}
+  #sheetTitle{font-size:15px;font-weight:600;color:#3D342E;text-align:center;margin-bottom:12px;}
+  #cols{display:flex;justify-content:center;align-items:center;gap:12px;position:relative;height:180px;}
+  .col{position:relative;height:180px;overflow-y:scroll;scroll-snap-type:y mandatory;flex:1;max-width:90px;-ms-overflow-style:none;scrollbar-width:none;}
+  .col::-webkit-scrollbar{display:none;}
+  .col .pad{height:72px;}
+  .col .n{scroll-snap-align:center;height:36px;line-height:36px;text-align:center;font-size:22px;color:#A89C8E;transition:color .15s,transform .15s;}
+  .col .n.act{color:#0E7CBE;font-weight:700;transform:scale(1.06);}
+  #sepCol{font-size:22px;font-weight:700;color:#3D342E;}
+  #selband{position:absolute;left:0;right:0;top:72px;height:36px;pointer-events:none;background:rgba(14,124,190,.06);border-top:0.5px solid #E7DECF;border-bottom:0.5px solid #E7DECF;border-radius:8px;}
+  #sheetBtns{display:flex;gap:10px;margin-top:14px;}
+  #sheetBtns button{flex:1;height:38px;border:none;border-radius:9999px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
+  #cancelBtn{background:#F2ECE1;color:#7A6E62;}
+  #okBtn{background:#0E7CBE;color:#fff;}
+</style>
+</head>
+<body>
+<div id="win">
+  <div id="hd" data-tauri-drag-region>
+    <button id="back"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>返回</button>
+    <span class="t" data-tauri-drag-region>设置</span>
+    <div style="width:44px"></div>
+  </div>
+
+  <div id="scroll">
+    <div class="glabel">饮水</div>
+    <div class="grp">
+      <div style="padding:12px 14px 16px;border-bottom:0.5px solid #EFE7D9;">
+        <div class="rlab">杯子容量</div><div class="rsub">选你常用的杯子，或自定义</div>
+        <div class="cupgrid">
+          <div class="cupcard" data-ml="200">
+            <div class="ci"><svg width="20" height="22" viewBox="0 0 20 22" fill="none"><path d="M3 2h14l-1.5 18h-11z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><rect x="4.5" y="12" width="11" height="8" rx=".8" fill="#0E7CBE" opacity=".12"/></svg></div>
+            <span class="cv">200ml</span><span class="cn">小杯</span>
+          </div>
+          <div class="cupcard" data-ml="300">
+            <div class="ci"><svg width="20" height="22" viewBox="0 0 20 22" fill="none"><path d="M3 2h14l-1.5 18h-11z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><rect x="4.2" y="9" width="11.6" height="11" rx=".8" fill="#0E7CBE" opacity=".12"/></svg></div>
+            <span class="cv">300ml</span><span class="cn">马克杯</span>
+          </div>
+          <div class="cupcard" data-ml="400">
+            <div class="ci"><svg width="20" height="22" viewBox="0 0 20 22" fill="none"><path d="M3 2h14l-1.5 18h-11z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><rect x="3.8" y="6" width="12.4" height="14" rx=".8" fill="#0E7CBE" opacity=".12"/></svg></div>
+            <span class="cv">400ml</span><span class="cn">大杯</span>
+          </div>
+          <div class="cupcard" data-ml="500">
+            <div class="ci"><svg width="20" height="22" viewBox="0 0 20 22" fill="none"><path d="M3 2h14l-1.5 18h-11z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><rect x="3.5" y="4" width="13" height="16" rx=".8" fill="#0E7CBE" opacity=".12"/></svg></div>
+            <span class="cv">500ml</span><span class="cn">水瓶</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-top:12px;">
+          <button class="step" id="cMinus"><svg width="14" height="14"><line x1="3" y1="7" x2="11" y2="7" stroke="#0E7CBE" stroke-width="2" stroke-linecap="round"/></svg></button>
+          <span class="sval" id="cVal">300 ml</span>
+          <button class="step" id="cPlus"><svg width="14" height="14"><line x1="3" y1="7" x2="11" y2="7" stroke="#0E7CBE" stroke-width="2" stroke-linecap="round"/><line x1="7" y1="3" x2="7" y2="11" stroke="#0E7CBE" stroke-width="2" stroke-linecap="round"/></svg></button>
+        </div>
+      </div>
+      <div style="padding:12px 14px 16px;">
+        <div class="rlab">每日目标</div><div class="rsub">成年人建议每天1500-2500ml</div>
+        <div class="goalpills">
+          <button class="pill" data-gml="1500">1500</button><button class="pill" data-gml="2000">2000</button><button class="pill" data-gml="2500">2500</button><button class="pill" data-gml="3000">3000</button>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-top:12px;">
+          <button class="step" id="gMinus"><svg width="14" height="14"><line x1="3" y1="7" x2="11" y2="7" stroke="#0E7CBE" stroke-width="2" stroke-linecap="round"/></svg></button>
+          <span class="sval" id="gVal">2000 ml</span>
+          <button class="step" id="gPlus"><svg width="14" height="14"><line x1="3" y1="7" x2="11" y2="7" stroke="#0E7CBE" stroke-width="2" stroke-linecap="round"/><line x1="7" y1="3" x2="7" y2="11" stroke="#0E7CBE" stroke-width="2" stroke-linecap="round"/></svg></button>
+        </div>
+        <div class="goalhelper" id="goalHelper">约 7 杯</div>
+      </div>
+    </div>
+
+    <div class="glabel">提醒</div>
+    <div class="grp">
+      <div style="padding:12px 14px 14px;border-bottom:0.5px solid #EFE7D9;">
+        <div class="rlab">提醒间隔</div><div class="rsub">从上次喝水算起，喝了会重新计时</div>
+        <div style="display:flex;gap:7px;justify-content:center;margin-top:12px;flex-wrap:wrap;">
+          <button class="pill" data-min="30">30</button><button class="pill" data-min="45">45</button><button class="pill" data-min="60">60</button><button class="pill" data-min="90">90</button>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-top:12px;">
+          <button class="step" id="iMinus"><svg width="14" height="14"><line x1="3" y1="7" x2="11" y2="7" stroke="#0E7CBE" stroke-width="2" stroke-linecap="round"/></svg></button>
+          <span class="sval" id="iVal">60 分钟</span>
+          <button class="step" id="iPlus"><svg width="14" height="14"><line x1="3" y1="7" x2="11" y2="7" stroke="#0E7CBE" stroke-width="2" stroke-linecap="round"/><line x1="7" y1="3" x2="7" y2="11" stroke="#0E7CBE" stroke-width="2" stroke-linecap="round"/></svg></button>
+        </div>
+      </div>
+      <div class="row">
+        <div><div class="rlab">活跃时段</div><div class="rsub">只在这段时间提醒</div></div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <button class="tchip" data-t="as">09:00</button><span class="tsep">-</span><button class="tchip" data-t="ae">18:00</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="glabel">免打扰</div>
+    <div class="grp">
+      <div class="row">
+        <div><div class="rlab">暂停提醒</div></div>
+        <div class="sw" id="swPause"><div class="knob"></div></div>
+      </div>
+      <div class="row">
+        <div><div class="rlab">免打扰时段</div></div>
+        <div class="sw" id="swDnd"><div class="knob"></div></div>
+      </div>
+      <div class="row" id="dndRow" style="display:none;">
+        <div class="rlab" style="font-weight:400;color:#7A6E62;">时段</div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <button class="tchip" data-t="ds">12:00</button><span class="tsep">-</span><button class="tchip" data-t="de">14:00</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="glabel">其他</div>
+    <div class="grp">
+      <div class="row">
+        <div><div class="rlab">开机自启动</div><div class="rsub" id="asSub">开机后自动打开柚柚</div></div>
+        <div class="sw" id="swAutostart"><div class="knob"></div></div>
+      </div>
+      <div class="row">
+        <div><div class="rlab">提示音</div></div>
+        <div class="sw" id="swSound"><div class="knob"></div></div>
+      </div>
+      <div class="row">
+        <div><div class="rlab">重置今日记录</div><div class="rsub" style="font-size:11px;color:#A89C8E;margin-top:2px">清零后可以重新看到过半和达标彩虹</div></div>
+        <button id="resetBtn" style="border:1px solid #E7DECF;background:#FEFDFB;color:#B94A3A;font-size:13px;padding:6px 14px;border-radius:9999px;cursor:pointer;font-family:inherit;">清零</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="mask">
+    <div id="sheet">
+      <div id="sheetTitle">选择时间</div>
+      <div id="cols">
+        <div class="col" id="hCol"></div>
+        <div id="sepCol">:</div>
+        <div class="col" id="mCol"></div>
+        <div id="selband"></div>
+      </div>
+      <div id="sheetBtns">
+        <button id="cancelBtn">取消</button>
+        <button id="okBtn">确定</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const { invoke } = window.__TAURI__.core;
+  const { listen } = window.__TAURI__.event;
+  let cfg = { intervalMinutes:60, activeStart:"09:00", activeEnd:"18:00", cupMl:300, dailyGoalMl:2000, paused:false, dndEnabled:false, dndStart:"12:00", dndEnd:"14:00", soundEnabled:true, onboardingShown:false };
+  const $ = id => document.getElementById(id);
+  const intPills = document.querySelectorAll('.pill[data-min]');
+  const goalPills = document.querySelectorAll('.pill[data-gml]');
+  const cupCards = document.querySelectorAll('.cupcard');
+  const chips = document.querySelectorAll('.tchip');
+
+  function goalCups(){ return Math.ceil(cfg.dailyGoalMl / cfg.cupMl); }
+
+  function paint(){
+    $('iVal').textContent = cfg.intervalMinutes + ' 分钟';
+    intPills.forEach(p=> p.classList.toggle('on', +p.dataset.min===cfg.intervalMinutes));
+    $('cVal').textContent = cfg.cupMl + ' ml';
+    cupCards.forEach(c=> c.classList.toggle('on', +c.dataset.ml===cfg.cupMl));
+    $('gVal').textContent = cfg.dailyGoalMl + ' ml';
+    goalPills.forEach(p=> p.classList.toggle('on', +p.dataset.gml===cfg.dailyGoalMl));
+    $('goalHelper').textContent = '约 ' + goalCups() + ' 杯';
+    $('swPause').classList.toggle('on', cfg.paused);
+    $('swDnd').classList.toggle('on', cfg.dndEnabled);
+    $('dndRow').style.display = cfg.dndEnabled ? 'flex' : 'none';
+    $('swSound').classList.toggle('on', cfg.soundEnabled);
+    const chipMap = { as:'activeStart', ae:'activeEnd', ds:'dndStart', de:'dndEnd' };
+    chips.forEach(c=> c.textContent = cfg[chipMap[c.dataset.t]]);
+  }
+  async function save(){ try{ const s = await invoke('save_config',{config:cfg}); cfg.onboardingShown = s.onboardingShown; }catch(e){} }
+  function set(k,v){ cfg[k]=v; paint(); save(); }
+
+  cupCards.forEach(c=> c.addEventListener('click',()=> set('cupMl', +c.dataset.ml)));
+  $('cMinus').addEventListener('click',()=> set('cupMl', Math.max(100, cfg.cupMl-50)));
+  $('cPlus').addEventListener('click',()=> set('cupMl', Math.min(1000, cfg.cupMl+50)));
+  goalPills.forEach(p=> p.addEventListener('click',()=> set('dailyGoalMl', +p.dataset.gml)));
+  $('gMinus').addEventListener('click',()=> set('dailyGoalMl', Math.max(500, cfg.dailyGoalMl-100)));
+  $('gPlus').addEventListener('click',()=> set('dailyGoalMl', Math.min(5000, cfg.dailyGoalMl+100)));
+  intPills.forEach(p=> p.addEventListener('click',()=> set('intervalMinutes', +p.dataset.min)));
+  $('iMinus').addEventListener('click',()=> set('intervalMinutes', Math.max(15, cfg.intervalMinutes-5)));
+  $('iPlus').addEventListener('click',()=> set('intervalMinutes', Math.min(180, cfg.intervalMinutes+5)));
+  $('swPause').addEventListener('click',()=> set('paused', !cfg.paused));
+  $('swDnd').addEventListener('click',()=> set('dndEnabled', !cfg.dndEnabled));
+  $('swSound').addEventListener('click',()=> set('soundEnabled', !cfg.soundEnabled));
+  let autostart=false, asBusy=false;
+  function asNote(text, bad){
+    const el=$('asSub');
+    el.textContent=text;
+    el.style.color = bad ? '#B94A3A' : '';
+  }
+  $('swAutostart').addEventListener('click', async ()=>{
+    if(asBusy) return; // 连点时别把状态点乱
+    asBusy=true;
+    const want=!autostart;
+    try{
+      if(want) await invoke('plugin:autostart|enable'); else await invoke('plugin:autostart|disable');
+      autostart=want;
+      asNote(want?'已设置，下次开机会自动打开':'开机后不再自动打开', false);
+    }catch(e){
+      // 不静默弹回：告诉用户没成功
+      asNote('设置没成功，可能被系统拦了，再试一次', true);
+    }
+    $('swAutostart').classList.toggle('on', autostart);
+    asBusy=false;
+  });
+  $('back').addEventListener('click', async ()=>{
+    await invoke('hide_window',{label:'settings'});
+    await invoke('show_window',{label:'main'});
+  });
+  let resetArmed=false, resetT;
+  function resetIdle(){ resetArmed=false; $('resetBtn').textContent='清零'; $('resetBtn').style.background='#FEFDFB'; $('resetBtn').style.borderColor='#E7DECF'; }
+  $('resetBtn').addEventListener('click', async ()=>{
+    if(!resetArmed){
+      resetArmed=true;
+      $('resetBtn').textContent='确定清零？';
+      $('resetBtn').style.background='#FBE7E3';
+      $('resetBtn').style.borderColor='#E7A99C';
+      clearTimeout(resetT); resetT=setTimeout(resetIdle, 3500);
+      return;
+    }
+    clearTimeout(resetT); resetArmed=false;
+    await invoke('reset_today');
+    $('resetBtn').textContent='已清零';
+    $('resetBtn').style.background='#FEFDFB';
+    $('resetBtn').style.borderColor='#E7DECF';
+    setTimeout(resetIdle, 1500);
+  });
+
+  const hCol=$('hCol'), mCol=$('mCol'), mask=$('mask');
+  function fillCol(col, from, to){
+    col.innerHTML='<div class="pad"></div>' + Array.from({length:to-from+1},(_,i)=>{const n=String(from+i).padStart(2,'0');return '<div class="n" data-v="'+(from+i)+'">'+n+'</div>';}).join('') + '<div class="pad"></div>';
+  }
+  fillCol(hCol,0,23); fillCol(mCol,0,59);
+  function markActive(col){
+    const idx=Math.round(col.scrollTop/36);
+    col.querySelectorAll('.n').forEach((el,i)=> el.classList.toggle('act', i===idx));
+    return idx;
+  }
+  hCol.addEventListener('scroll',()=> markActive(hCol));
+  mCol.addEventListener('scroll',()=> markActive(mCol));
+  let editingKey=null;
+  chips.forEach(c=> c.addEventListener('click',()=>{
+    const map = { as:['activeStart','活跃时段·开始'], ae:['activeEnd','活跃时段·结束'], ds:['dndStart','免打扰·开始'], de:['dndEnd','免打扰·结束'] };
+    const [key,title]=map[c.dataset.t];
+    editingKey=key; $('sheetTitle').textContent=title;
+    const [h,m]=(cfg[key]||'00:00').split(':').map(Number);
+    mask.style.display='flex';
+    requestAnimationFrame(()=>{ hCol.scrollTop=h*36; mCol.scrollTop=m*36; markActive(hCol); markActive(mCol); });
+  }));
+  $('cancelBtn').addEventListener('click',()=>{ mask.style.display='none'; editingKey=null; });
+  $('okBtn').addEventListener('click',()=>{
+    const h=String(Math.round(hCol.scrollTop/36)).padStart(2,'0');
+    const m=String(Math.round(mCol.scrollTop/36)).padStart(2,'0');
+    if(editingKey) set(editingKey, h+':'+m);
+    mask.style.display='none'; editingKey=null;
+  });
+
+  function fromSnap(s){
+    return { intervalMinutes:s.intervalMinutes, activeStart:s.activeStart, activeEnd:s.activeEnd, cupMl:s.cupMl, dailyGoalMl:s.dailyGoalMl, paused:s.paused, dndEnabled:s.dndEnabled, dndStart:s.dndStart, dndEnd:s.dndEnd, soundEnabled:s.soundEnabled, onboardingShown:s.onboardingShown };
+  }
+
+  listen('updated', e=>{
+    const s=e.payload; if(!s) return;
+    if(document.querySelector('#mask').style.display==='flex') return;
+    cfg = fromSnap(s);
+    paint();
+  });
+
+  (async()=>{
+    try{ const s = await invoke('get_snapshot'); cfg = fromSnap(s); paint(); }catch(e){ paint(); }
+    try{ autostart = await invoke('plugin:autostart|is_enabled'); $('swAutostart').classList.toggle('on', autostart); }
+    catch(e){ asNote('读不到开机启动状态', true); } // 别吞掉，否则开关显示可能跟实际不符
+  })();
+</script>
+</body>
+</html>
