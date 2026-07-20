@@ -192,7 +192,9 @@
     // 状态标记画在图片外层，这样即使用的是静态图也看得出状态
     const sleeping = (s==='sleep');
     sleepMark.style.display = sleeping ? 'block' : 'none';
-    petbox.style.filter = sleeping ? 'saturate(.55) brightness(.94)' : '';
+    // 下班（offhours）时不给桌宠发灰，颜色跟上班时一致；暂停/免打扰仍然发灰以示区别
+    const dulled = sleeping && reason !== 'offhours';
+    petbox.style.filter = dulled ? 'saturate(.55) brightness(.94)' : '';
     // 下面这些只对内置 SVG 生效（没放 pet.png 时的后备形象）
     if(s==='sleep'){eyes.innerHTML=sEyes;mouth.innerHTML=nMouth;zzz.style.display='';}
     else if(s==='happy'||s==='goal'){eyes.innerHTML=hEyes;mouth.innerHTML=hMouth;zzz.style.display='none';}
