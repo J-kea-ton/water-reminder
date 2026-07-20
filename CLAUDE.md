@@ -98,6 +98,8 @@ cargo test             # 跑 Rust 单测
 
 **没验证过**：**通知从没在打包成 .app 之后验证过**。`cargo tauri dev` 下的通知行为跟正式 .app 可能不同（签名、通知权限）。这是当前最大的未知，优先做。
 
+**待实现（原型已定稿）**：喝水统计功能。方案见 [docs/plan-20260719-water-stats.md](docs/plan-20260719-water-stats.md)——留 30 天历史、单独统计页、日均/连续达标/达标率、7 天柱状图 + 30 天平滑曲线。要做时读那份文档照做。
+
 **暂缓**：站立提醒（暂不做）。
 
 **代码管理**：已进 git + GitHub（`git@github.com:J-kea-ton/water-reminder.git`），走 SSH。v1.0 标签 = 2026-07-19 定稿版。改完让本体跑 add/commit/push。
