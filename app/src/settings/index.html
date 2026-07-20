@@ -253,10 +253,8 @@
     $('swAutostart').classList.toggle('on', autostart);
     asBusy=false;
   });
-  $('back').addEventListener('click', async ()=>{
-    await invoke('hide_window',{label:'settings'});
-    await invoke('show_window',{label:'main'});
-  });
+  $('back').addEventListener('click',()=>
+    invoke('switch_window',{from:'settings',to:'main'}));
   let resetArmed=false, resetT;
   function resetIdle(){ resetArmed=false; $('resetBtn').textContent='清零'; $('resetBtn').style.background='#FEFDFB'; $('resetBtn').style.borderColor='#E7DECF'; }
   $('resetBtn').addEventListener('click', async ()=>{

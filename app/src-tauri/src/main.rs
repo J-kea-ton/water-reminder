@@ -444,6 +444,25 @@ fn hide_window(app: AppHandle, label: String) {
     }
 }
 
+// 从 from 窗口切到 to 窗口：让 to 出现在 from 当前所在位置，再隐藏 from。
+// 三个面板窗口尺寸相同，位置对齐即视觉上"原地替换"，不会跳回屏幕中央。
+#[tauri::command]
+fn switch_window(app: AppHandle, from: String, to: String) {
+    let (fw, tw) = match (
+        app.get_webview_window(&from),
+        app.get_webview_window(&to),
+    ) {
+        (Some(f), Some(t)) => (f, t),
+        _ => return,
+    };
+    if let Ok(pos) = fw.outer_position() {
+        let _ = tw.set_position(pos); // 先对齐位置，再显示，避免先在中央闪一下
+    }
+    let _ = tw.show();
+    let _ = tw.set_focus();
+    let _ = fw.hide();
+}
+
 #[tauri::command]
 fn toggle_pet_visible(app: AppHandle) {
     if let Some(w) = app.get_webview_window("pet") {
@@ -732,6 +751,7 @@ fn main() {
             toggle_pause,
             show_window,
             hide_window,
+            switch_window,
             toggle_pet_visible,
             pet_retract,
             pet_expand,

@@ -7,39 +7,47 @@
 <style>
   html,body{margin:0;height:100%;background:transparent;overflow:hidden;font-family:-apple-system,"PingFang SC",sans-serif;-webkit-user-select:none;user-select:none;}
   #win{width:100%;height:100%;background:#FBF7F0;border-radius:20px;display:flex;flex-direction:column;box-sizing:border-box;position:relative;}
-  #hd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 8px;flex-shrink:0;}
-  #hd .t{font-size:19px;font-weight:700;color:#3D342E;}
-  #back{display:flex;align-items:center;gap:4px;padding:6px 12px 6px 8px;border:none;background:transparent;border-radius:9999px;color:#0E7CBE;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
+
+  /* 顶栏：标题真正居中（三列网格，两侧等宽） */
+  #hd{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:14px 16px 6px;flex-shrink:0;}
+  #hd .t{grid-column:2;text-align:center;font-size:19px;font-weight:800;color:#3D342E;}
+  #back{grid-column:1;justify-self:start;display:flex;align-items:center;gap:3px;padding:6px 10px 6px 6px;border:none;background:transparent;border-radius:9999px;color:#0E7CBE;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
   #back:hover{background:#E3F2FB;}
-  #scroll{flex:1;overflow-y:auto;padding:0 18px 22px;}
+
+  #scroll{flex:1;overflow-y:auto;padding:2px 18px 18px;}
   #scroll::-webkit-scrollbar{width:6px;} #scroll::-webkit-scrollbar-thumb{background:#E7DECF;border-radius:3px;}
 
-  /* 三张数字卡 */
-  #cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px;}
-  .card{background:#FEFCF8;border:0.5px solid #E7DECF;border-radius:14px;padding:14px 6px 12px;text-align:center;}
-  .card .v{font-size:24px;font-weight:700;color:#3D342E;line-height:1;}
-  .card .v .u{font-size:13px;font-weight:600;color:#9A8E7E;margin-left:1px;}
-  .card .k{font-size:11px;color:#A89C8E;margin-top:6px;}
+  /* 切换栏：两个等宽圆角卡片，选中底部蓝线 */
+  #tabs{display:flex;gap:10px;margin-top:4px;}
+  .tab{flex:1;position:relative;padding:13px 0;text-align:center;border:1px solid #E7DECF;border-radius:13px;background:#FEFCF8;color:#8A7E6E;font-weight:600;font-size:15px;cursor:pointer;font-family:inherit;transition:color .18s,border-color .18s;}
+  .tab:hover{border-color:#CFE3F0;}
+  .tab.on{color:#0E7CBE;border-color:#BFDCEF;}
+  .tab.on::after{content:'';position:absolute;left:20%;right:20%;bottom:-1px;height:3px;background:#0E7CBE;border-radius:2px;}
 
-  /* 下划线式切换栏 */
-  #tabs{position:relative;display:flex;gap:24px;margin:20px 4px 0;border-bottom:0.5px solid #EFE7D9;}
-  .tab{position:relative;padding:8px 2px 10px;font-size:14px;color:#A89C8E;cursor:pointer;font-weight:600;transition:color .18s;background:none;border:none;font-family:inherit;}
-  .tab.on{color:#0E7CBE;}
-  #tabline{position:absolute;bottom:-0.5px;height:2px;background:#0E7CBE;border-radius:2px;transition:left .25s cubic-bezier(.4,0,.2,1),width .25s cubic-bezier(.4,0,.2,1);}
+  /* 三张彩色数字卡 */
+  #cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-top:16px;}
+  .card{position:relative;border-radius:16px;padding:15px 6px 12px;text-align:center;}
+  .card .ic{position:absolute;top:9px;right:9px;font-size:12px;line-height:1;}
+  .card .v{font-size:22px;font-weight:800;line-height:1;}
+  .card .v .u{font-size:12px;font-weight:600;margin-left:1px;opacity:.75;}
+  .card .k{font-size:11px;margin-top:7px;}
+  .card.blue{background:#E9F2FB;}   .card.blue .v{color:#2E7BB8;}   .card.blue .k{color:#7095B4;}
+  .card.orange{background:#FBEDE0;} .card.orange .v{color:#DB8A3A;} .card.orange .k{color:#C2905F;}
+  .card.green{background:#E8F4ED;}  .card.green .v{color:#3DA579;}  .card.green .k{color:#6EA88D;}
 
   /* 图表卡 */
-  #chartCard{background:#FEFCF8;border:0.5px solid #E7DECF;border-radius:16px;padding:16px 12px 10px;margin-top:16px;}
-  #chartTitle{font-size:13px;color:#7A6E62;font-weight:600;margin:0 4px 8px;}
+  #chartCard{background:#FEFCF8;border:1px solid #EFE7D9;border-radius:18px;padding:15px 13px 8px;margin-top:16px;}
+  .chartHd{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+  #chartTitle{font-size:14px;font-weight:700;color:#3D342E;}
+  .goalTag{display:flex;align-items:center;gap:5px;font-size:11px;color:#C79A3B;white-space:nowrap;}
+  .goalTag i{width:16px;border-top:2px dashed #E2A93B;}
   #chartSvg{width:100%;display:block;}
-  #legend{display:flex;justify-content:center;gap:14px;margin-top:6px;font-size:11px;color:#A89C8E;}
-  .lg{display:flex;align-items:center;gap:5px;}
-  .lg .dot{width:9px;height:9px;border-radius:3px;}
 
   /* 鼓励横幅 */
-  #banner{display:flex;align-items:center;justify-content:center;gap:6px;margin:16px auto 2px;max-width:280px;background:#FFF3E4;color:#C77A2E;font-size:13px;font-weight:600;padding:9px 16px;border-radius:9999px;text-align:center;line-height:1.35;}
+  #banner{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:16px;background:#FBEEDD;color:#C77A2E;font-size:14px;font-weight:600;padding:12px 16px;border-radius:16px;text-align:center;line-height:1.4;}
 
   /* 空状态 */
-  #empty{display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center;color:#A89C8E;}
+  #empty{display:none;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;color:#A89C8E;}
   #empty .big{font-size:15px;color:#7A6E62;font-weight:600;margin-top:12px;}
   #empty .small{font-size:13px;margin-top:6px;line-height:1.5;}
 </style>
@@ -49,31 +57,27 @@
   <div id="hd" data-tauri-drag-region>
     <button id="back"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>返回</button>
     <span class="t" data-tauri-drag-region>喝水统计</span>
-    <div style="width:44px"></div>
   </div>
 
   <div id="scroll">
     <div id="content">
-      <div id="cards">
-        <div class="card"><div class="v" id="cAvg">0<span class="u">ml</span></div><div class="k">日均</div></div>
-        <div class="card"><div class="v" id="cStreak">0<span class="u">天</span></div><div class="k">连续达标</div></div>
-        <div class="card"><div class="v" id="cRate">0<span class="u">%</span></div><div class="k">达标率</div></div>
-      </div>
-
       <div id="tabs">
         <button class="tab on" data-view="7">近 7 天</button>
         <button class="tab" data-view="30">近 30 天</button>
-        <div id="tabline"></div>
+      </div>
+
+      <div id="cards">
+        <div class="card blue"><span class="ic">💧</span><div class="v" id="cAvg">0<span class="u">ml</span></div><div class="k">日均</div></div>
+        <div class="card orange"><span class="ic">🔥</span><div class="v" id="cStreak">0<span class="u">天</span></div><div class="k">连续达标</div></div>
+        <div class="card green"><span class="ic">🎯</span><div class="v" id="cRate">0<span class="u">%</span></div><div class="k">达标率</div></div>
       </div>
 
       <div id="chartCard">
-        <div id="chartTitle">每天喝水量</div>
-        <svg id="chartSvg" viewBox="0 0 300 175" preserveAspectRatio="xMidYMid meet"></svg>
-        <div id="legend">
-          <div class="lg"><span class="dot" style="background:#2FB07C"></span>达标</div>
-          <div class="lg"><span class="dot" style="background:#0E7CBE"></span>没喝够</div>
-          <div class="lg"><span class="dot" style="background:#E2D8C6"></span>没喝</div>
+        <div class="chartHd">
+          <span id="chartTitle">每天喝水量</span>
+          <span class="goalTag"><i></i>目标 <span id="goalTxt">2000</span>ml</span>
         </div>
+        <svg id="chartSvg" viewBox="0 0 304 234" preserveAspectRatio="xMidYMid meet"></svg>
       </div>
 
       <div id="banner"></div>
@@ -92,82 +96,71 @@
   const { listen } = window.__TAURI__.event;
   const $ = id => document.getElementById(id);
 
-  let points = [];   // 后端给的 30 个连续点，oldest→newest
-  let view = 7;      // 当前视图：7 或 30
+  let points = [];   // 后端给的最近 30 个连续点，oldest→newest
+  let view = 7;
 
   const WEEK = ['日','一','二','三','四','五','六'];
   function weekdayLabel(dateStr, isToday){
-    if(isToday) return '今';
+    if(isToday) return '今天';
     const [y,m,d] = dateStr.split('-').map(Number);
     return WEEK[new Date(y, m-1, d).getDay()];
   }
 
-  // ===== 统计计算（纯函数，喂 points 出结果）=====
+  // ===== 统计计算 =====
   function metOf(p){ return p.goalMl > 0 && p.totalMl >= p.goalMl; }
-
-  function avgMl(view){
-    const vp = points.slice(-view);
-    const drank = vp.filter(p => p.totalMl > 0);
-    if(drank.length === 0) return 0;
-    const sum = drank.reduce((a,p)=> a + p.totalMl, 0);
-    return Math.round(sum / drank.length);
+  function avgMl(v){
+    const vp = points.slice(-v).filter(p => p.totalMl > 0);
+    if(!vp.length) return 0;
+    return Math.round(vp.reduce((a,p)=> a + p.totalMl, 0) / vp.length);
   }
-  // 连续达标：从今天往前数，连着达标的天数。今天还没达标不算断，从昨天起算。
   function streakDays(){
     let s = 0;
     for(let i = points.length - 1; i >= 0; i--){
       const p = points[i];
-      if(p.isToday && !metOf(p)) continue;
+      if(p.isToday && !metOf(p)) continue;   // 今天还没达标不算断，从昨天起算
       if(metOf(p)) s++; else break;
     }
     return s;
   }
-  function rate(view){
-    const vp = points.slice(-view);
-    if(vp.length === 0) return 0;
-    const met = vp.filter(metOf).length;
-    return Math.round(met / vp.length * 100);
+  function rate(v){
+    const vp = points.slice(-v);
+    if(!vp.length) return 0;
+    return Math.round(vp.filter(metOf).length / vp.length * 100);
   }
 
   // ===== 图表 =====
-  const PX0=8, PX1=292, PW=284, PY_TOP=14, PY_BOT=142, PH=128;
+  const PX0=8, PX1=296, PW=288, PY_TOP=16, PY_BOT=200, PH=184, YLAB=222;
   const SVG='http://www.w3.org/2000/svg';
-  function el(name, attrs){ const e=document.createElementNS(SVG,name); for(const k in attrs) e.setAttribute(k, attrs[k]); return e; }
+  function el(name, attrs, text){ const e=document.createElementNS(SVG,name); for(const k in attrs) e.setAttribute(k, attrs[k]); if(text!=null) e.textContent=text; return e; }
 
-  function chartScale(vp){
+  function scaleOf(vp){
     const goal = vp.length ? vp[vp.length-1].goalMl : 2000;
     const maxTotal = Math.max(0, ...vp.map(p=>p.totalMl));
-    const maxVal = Math.max(goal, maxTotal, 1);
-    return { goal, maxVal };
+    return { goal, maxVal: Math.max(goal, maxTotal, 1) };
   }
-  // 值 → y 坐标；留 10% 顶部余量，别顶到边
-  function yOf(val, maxVal){ return PY_BOT - (val / maxVal) * PH * 0.9; }
+  function yOf(val, maxVal){ return PY_BOT - (val / maxVal) * PH * 0.92; }
 
-  function drawGoalLine(svg, goal, maxVal){
+  function goalLine(svg, goal, maxVal){
     const gy = yOf(goal, maxVal);
-    svg.appendChild(el('line',{x1:PX0,y1:gy,x2:PX1,y2:gy,stroke:'#E2A93B',
-      'stroke-width':1,'stroke-dasharray':'3 3',opacity:.7}));
-    svg.appendChild(el('text',{x:PX1,y:gy-4,'text-anchor':'end',
-      'font-size':9,fill:'#C79A3B'})).textContent='目标';
+    svg.appendChild(el('line',{x1:PX0,y1:gy,x2:PX1,y2:gy,stroke:'#E2A93B','stroke-width':1.5,'stroke-dasharray':'4 4',opacity:.75}));
   }
 
   function renderBars(vp){
     const svg=$('chartSvg'); svg.innerHTML='';
-    const {goal, maxVal}=chartScale(vp);
-    drawGoalLine(svg, goal, maxVal);
-    const slot=PW/vp.length, barW=Math.min(26, slot*0.5);
+    const {goal, maxVal}=scaleOf(vp);
+    goalLine(svg, goal, maxVal);
+    const slot=PW/vp.length, barW=Math.min(30, slot*0.6);
     vp.forEach((p,i)=>{
       const cx=PX0 + i*slot + slot/2, x=cx-barW/2;
-      let color, h, y;
-      if(p.totalMl===0){ color='#E2D8C6'; h=4; y=PY_BOT-h; }
-      else{ color = metOf(p) ? '#2FB07C' : '#0E7CBE'; h=Math.max(4, PY_BOT-yOf(p.totalMl,maxVal)); y=PY_BOT-h; }
-      svg.appendChild(el('rect',{x,y,width:barW,height:h,rx:4,fill:color,
-        opacity:p.isToday?1:.9}));
-      // 今日柱下面加个小蓝点标记
-      const lab=el('text',{x:cx,y:158,'text-anchor':'middle','font-size':11,
-        fill:p.isToday?'#0E7CBE':'#A89C8E','font-weight':p.isToday?700:400});
-      lab.textContent=weekdayLabel(p.date, p.isToday);
-      svg.appendChild(lab);
+      let fill, h;
+      if(p.totalMl===0){ fill='#E4DAC8'; h=5; }
+      else { fill = metOf(p) ? '#63C08D' : '#9AC8EA'; h=Math.max(6, PY_BOT-yOf(p.totalMl,maxVal)); }
+      const y=PY_BOT-h;
+      const rect=el('rect',{x,y,width:barW,height:h,rx:6,fill});
+      if(p.isToday){ rect.setAttribute('stroke','#3F7BB5'); rect.setAttribute('stroke-width','2.5'); }
+      svg.appendChild(rect);
+      svg.appendChild(el('text',{x:cx,y:YLAB,'text-anchor':'middle','font-size':12,
+        fill:p.isToday?'#0E7CBE':'#A89C8E','font-weight':p.isToday?700:400}, weekdayLabel(p.date,p.isToday)));
     });
     svg.appendChild(el('line',{x1:PX0,y1:PY_BOT,x2:PX1,y2:PY_BOT,stroke:'#EFE7D9','stroke-width':1}));
   }
@@ -186,33 +179,26 @@
 
   function renderLine(vp){
     const svg=$('chartSvg'); svg.innerHTML='';
-    const {goal, maxVal}=chartScale(vp);
-    drawGoalLine(svg, goal, maxVal);
+    const {goal, maxVal}=scaleOf(vp);
     const n=vp.length;
-    const pts=vp.map((p,i)=>({x:PX0 + (n>1 ? i*(PW/(n-1)) : PW/2), y:yOf(p.totalMl,maxVal)}));
+    const pts=vp.map((p,i)=>({x:PX0 + (n>1 ? i*(PW/(n-1)) : PW/2), y:yOf(p.totalMl,maxVal), p}));
     const line=smoothPath(pts);
-    // 曲线下方淡蓝填充
-    const area=line+' L'+pts[n-1].x+' '+PY_BOT+' L'+pts[0].x+' '+PY_BOT+' Z';
     const grad=el('linearGradient',{id:'lg',x1:0,y1:0,x2:0,y2:1});
-    grad.appendChild(el('stop',{offset:0,'stop-color':'#0E7CBE','stop-opacity':.18}));
-    grad.appendChild(el('stop',{offset:1,'stop-color':'#0E7CBE','stop-opacity':0}));
+    grad.appendChild(el('stop',{offset:0,'stop-color':'#3E92CE','stop-opacity':.20}));
+    grad.appendChild(el('stop',{offset:1,'stop-color':'#3E92CE','stop-opacity':0}));
     const defs=el('defs',{}); defs.appendChild(grad); svg.appendChild(defs);
-    svg.appendChild(el('path',{d:area,fill:'url(#lg)'}));
-    svg.appendChild(el('path',{d:line,fill:'none',stroke:'#0E7CBE','stroke-width':2,
-      'stroke-linecap':'round','stroke-linejoin':'round'}));
-    // 今日端点
+    svg.appendChild(el('path',{d:line+' L'+pts[n-1].x+' '+PY_BOT+' L'+pts[0].x+' '+PY_BOT+' Z',fill:'url(#lg)'}));
+    goalLine(svg, goal, maxVal);
+    svg.appendChild(el('path',{d:line,fill:'none',stroke:'#3E92CE','stroke-width':2.4,'stroke-linecap':'round','stroke-linejoin':'round'}));
+    // 达标的天在曲线上点个绿点
+    pts.forEach(pt=>{ if(metOf(pt.p) && !pt.p.isToday) svg.appendChild(el('circle',{cx:pt.x,cy:pt.y,r:2.6,fill:'#63C08D'})); });
+    // 今天：空心蓝圆
     const last=pts[n-1];
-    svg.appendChild(el('circle',{cx:last.x,cy:last.y,r:3.5,fill:'#0E7CBE',stroke:'#FEFCF8','stroke-width':1.5}));
+    svg.appendChild(el('circle',{cx:last.x,cy:last.y,r:4.5,fill:'#FEFCF8',stroke:'#3E92CE','stroke-width':2.4}));
     svg.appendChild(el('line',{x1:PX0,y1:PY_BOT,x2:PX1,y2:PY_BOT,stroke:'#EFE7D9','stroke-width':1}));
-    svg.appendChild(el('text',{x:PX0,y:158,'text-anchor':'start','font-size':10,fill:'#A89C8E'})).textContent='30 天前';
-    svg.appendChild(el('text',{x:PX1,y:158,'text-anchor':'end','font-size':10,fill:'#0E7CBE','font-weight':600})).textContent='今天';
-  }
-
-  function moveTabline(){
-    const on=document.querySelector('.tab.on');
-    const line=$('tabline');
-    line.style.left=on.offsetLeft+'px';
-    line.style.width=on.offsetWidth+'px';
+    svg.appendChild(el('text',{x:PX0,y:YLAB,'text-anchor':'start','font-size':11,fill:'#A89C8E'},'30 天前'));
+    svg.appendChild(el('text',{x:(PX0+PX1)/2,y:YLAB,'text-anchor':'middle','font-size':11,fill:'#A89C8E'},'15 天前'));
+    svg.appendChild(el('text',{x:PX1,y:YLAB,'text-anchor':'end','font-size':11,fill:'#0E7CBE','font-weight':600},'今天'));
   }
 
   function render(){
@@ -221,19 +207,19 @@
     $('empty').style.display = hasData ? 'none' : 'flex';
     if(!hasData) return;
 
-    $('cAvg').innerHTML = avgMl(view) + '<span class="u">ml</span>';
-    $('cStreak').innerHTML = streakDays() + '<span class="u">天</span>';
-    $('cRate').innerHTML = rate(view) + '<span class="u">%</span>';
+    $('cAvg').innerHTML   = avgMl(view) + '<span class="u">ml</span>';
+    $('cStreak').innerHTML= streakDays() + '<span class="u">天</span>';
+    $('cRate').innerHTML  = rate(view) + '<span class="u">%</span>';
 
     const vp = points.slice(-view);
-    $('chartTitle').textContent = view===7 ? '近 7 天每天喝水量' : '近 30 天喝水趋势';
+    $('chartTitle').textContent = view===7 ? '每天喝水量' : '近 30 天走势';
+    $('goalTxt').textContent = vp.length ? vp[vp.length-1].goalMl : 2000;
     if(view===7) renderBars(vp); else renderLine(vp);
 
     const s = streakDays();
     $('banner').textContent = s>=1
-      ? '🔥 已经连续 ' + s + ' 天喝够啦'
+      ? '🔥 已经连续 ' + s + ' 天喝够啦，保持住～'
       : '💧 今天先喝够一天，开启连续记录';
-    requestAnimationFrame(moveTabline);
   }
 
   document.querySelectorAll('.tab').forEach(t=> t.addEventListener('click',()=>{
@@ -243,17 +229,14 @@
     render();
   }));
 
-  $('back').addEventListener('click', async ()=>{
-    await invoke('hide_window',{label:'stats'});
-    await invoke('show_window',{label:'main'});
-  });
+  $('back').addEventListener('click',()=>
+    invoke('switch_window',{from:'stats',to:'main'}));
 
   async function load(){
     try{ points = await invoke('get_stats') || []; }
     catch(e){ points = []; }
     render();
   }
-  // 喝水后主窗会 emit updated，统计页跟着重新拉一次
   listen('updated', ()=> load());
   load();
 </script>

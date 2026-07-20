@@ -222,14 +222,10 @@
   halfBtn.addEventListener('click',()=> invoke('drink',{ml:Math.round(currentCupMl/2)}));
   sipBtn.addEventListener('click',()=> invoke('drink',{ml:50}));
   document.getElementById('undoBtn').addEventListener('click',()=> invoke('undo_drink'));
-  document.getElementById('gear').addEventListener('click', async ()=>{
-    await invoke('hide_window',{label:'main'});
-    await invoke('show_window',{label:'settings'});
-  });
-  document.getElementById('statsBtn').addEventListener('click', async ()=>{
-    await invoke('hide_window',{label:'main'});
-    await invoke('show_window',{label:'stats'});
-  });
+  document.getElementById('gear').addEventListener('click',()=>
+    invoke('switch_window',{from:'main',to:'settings'}));
+  document.getElementById('statsBtn').addEventListener('click',()=>
+    invoke('switch_window',{from:'main',to:'stats'}));
   document.getElementById('close').addEventListener('click',()=> invoke('hide_window',{label:'main'}));
   document.getElementById('petBtn').addEventListener('click',()=> invoke('toggle_pet_visible'));
   const toast=document.getElementById('toast');
