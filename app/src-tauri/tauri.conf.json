@@ -56,6 +56,19 @@
         "shadow": false,
         "center": true,
         "visible": false
+      },
+      {
+        "label": "stats",
+        "url": "stats/index.html",
+        "title": "喝水统计",
+        "width": 340,
+        "height": 620,
+        "resizable": false,
+        "decorations": false,
+        "transparent": true,
+        "shadow": false,
+        "center": true,
+        "visible": false
       }
     ]
   },

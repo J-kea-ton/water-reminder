@@ -55,11 +55,22 @@ pub struct DayState {
     pub drink_log: Vec<DrinkEntry>,
 }
 
+// 已结束的某一天的总量快照。历史里一天一条，只留总量，不留每杯明细。
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DayStat {
+    pub date: String,  // "2026-07-19"
+    pub total_ml: u32, // 当天喝的总量
+    pub goal_ml: u32,  // 当天的目标（目标可能被改过，存当时的，判达标要用它）
+}
+
 #[derive(Clone, Serialize, Deserialize, Default)]
 #[serde(default)]
 pub struct Persisted {
     pub config: Config,
     pub day: DayState,
+    // 已完成的每日总量，最多 30 条，旧的在前。老 state.json 没有此字段时补空 Vec。
+    pub history: Vec<DayStat>,
 }
 
 impl Persisted {

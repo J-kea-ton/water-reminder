@@ -1,4 +1,4 @@
-use chrono::{Local, TimeZone, Timelike};
+use chrono::{Duration, Local, TimeZone, Timelike};
 
 pub fn now_epoch() -> i64 {
     Local::now().timestamp()
@@ -6,6 +6,14 @@ pub fn now_epoch() -> i64 {
 
 pub fn today_str() -> String {
     Local::now().format("%Y-%m-%d").to_string()
+}
+
+// 本地日期往前推 days 天的日期串。date_before(0) == today_str()。
+// 用于补齐统计图的连续日期轴。
+pub fn date_before(days: i64) -> String {
+    (Local::now().date_naive() - Duration::days(days))
+        .format("%Y-%m-%d")
+        .to_string()
 }
 
 pub fn now_minutes() -> u32 {

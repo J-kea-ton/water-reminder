@@ -4,7 +4,7 @@ mod model;
 mod screenscan;
 mod timeutil;
 
-use model::{AppState, Config, DrinkEntry, Persisted};
+use model::{AppState, Config, DayStat, DrinkEntry, Persisted};
 use timeutil::*;
 
 use serde::Serialize;
@@ -42,6 +42,7 @@ struct Snapshot {
 fn ensure_today(p: &mut Persisted) -> bool {
     let t = today_str();
     if p.day.date != t {
+        archive_day(p); // 清空前先把要结束的那天存进 history
         p.day.date = t;
         p.day.count = 0;
         p.day.total_ml = 0;
@@ -50,6 +51,26 @@ fn ensure_today(p: &mut Persisted) -> bool {
         true
     } else {
         false
+    }
+}
+
+// 把 p.day（要结束的那天）归档到 history。
+// 只归档真喝过水的天；按 date 判重保证幂等（一天内多次调 ensure_today 不重复 push）；裁剪到最近 30 条。
+fn archive_day(p: &mut Persisted) {
+    if p.day.date.is_empty() || p.day.total_ml == 0 {
+        return;
+    }
+    if p.history.iter().any(|d| d.date == p.day.date) {
+        return;
+    }
+    p.history.push(DayStat {
+        date: p.day.date.clone(),
+        total_ml: p.day.total_ml,
+        goal_ml: p.config.daily_goal_ml, // 用当天的目标，不是今天的
+    });
+    let len = p.history.len();
+    if len > 30 {
+        p.history.drain(0..len - 30);
     }
 }
 
@@ -244,6 +265,64 @@ fn get_snapshot(state: State<AppState>) -> Snapshot {
     let mut p = state.persisted.lock().unwrap();
     let reset = ensure_today(&mut p);
     build_snapshot(&p, reset)
+}
+
+// 统计页的一天：连续日期轴上的一个点。缺记录的天补 total_ml=0。
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct StatsPoint {
+    date: String,
+    total_ml: u32,
+    goal_ml: u32,
+    is_today: bool,
+}
+
+// 截止到今天（含）最近 n 天的日期，oldest→newest。
+fn recent_dates(n: i64) -> Vec<String> {
+    (0..n).rev().map(date_before).collect()
+}
+
+// 把 history + 今天的实时数据，按给定日期轴摊成连续的点。
+// 达标率/连续/日均等统计放前端算，后端只负责给齐这 n 个点。
+fn assemble_stats(p: &Persisted, dates: &[String]) -> Vec<StatsPoint> {
+    dates
+        .iter()
+        .map(|dt| {
+            if *dt == p.day.date {
+                StatsPoint {
+                    date: dt.clone(),
+                    total_ml: p.day.total_ml,
+                    goal_ml: p.config.daily_goal_ml,
+                    is_today: true,
+                }
+            } else if let Some(h) = p.history.iter().find(|h| &h.date == dt) {
+                StatsPoint {
+                    date: dt.clone(),
+                    total_ml: h.total_ml,
+                    goal_ml: h.goal_ml,
+                    is_today: false,
+                }
+            } else {
+                // 没喝的天补 0，目标用当前配置（total 0 < goal，前端自然算作没达标）
+                StatsPoint {
+                    date: dt.clone(),
+                    total_ml: 0,
+                    goal_ml: p.config.daily_goal_ml,
+                    is_today: false,
+                }
+            }
+        })
+        .collect()
+}
+
+#[tauri::command]
+fn get_stats(state: State<AppState>) -> Vec<StatsPoint> {
+    let mut p = state.persisted.lock().unwrap();
+    if ensure_today(&mut p) {
+        persist(&state, &p); // 打开统计页时若正好跨了天，把归档落盘
+    }
+    let dates = recent_dates(30);
+    assemble_stats(&p, &dates)
 }
 
 // 记一杯：往 drink_log 追加一条，count 由 log 长度派生。
@@ -645,6 +724,7 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             get_snapshot,
+            get_stats,
             drink,
             undo_drink,
             snooze,
@@ -1087,5 +1167,108 @@ mod tests {
         apply_undo(&mut p);
         // 撤到空 last_drink_epoch=0，此时 should_remind 用 now-interval 兜底
         let _ = should_remind(&p);
+    }
+
+    #[test]
+    fn 归档_跨天把喝过的那天存进history() {
+        let mut p = fresh();
+        apply_drink(&mut p, Some(1800), 1000);
+        p.day.date = "2026-07-19".into();
+        p.config.daily_goal_ml = 2000;
+        ensure_today(&mut p);
+        assert_eq!(p.history.len(), 1);
+        assert_eq!(p.history[0].date, "2026-07-19");
+        assert_eq!(p.history[0].total_ml, 1800);
+        assert_eq!(p.history[0].goal_ml, 2000, "归档存的是当天目标");
+        // 归档后当天字段照旧清空
+        assert_eq!(p.day.total_ml, 0);
+        assert_coherent(&p);
+    }
+
+    #[test]
+    fn 归档_没喝过的天不归档() {
+        let mut p = fresh();
+        p.day.date = "2026-07-19".into(); // total_ml 仍是 0
+        ensure_today(&mut p);
+        assert!(p.history.is_empty(), "没喝过的天不该进 history");
+    }
+
+    #[test]
+    fn 归档_同一天幂等不重复push() {
+        let mut p = fresh();
+        p.history.push(DayStat {
+            date: "2026-07-19".into(),
+            total_ml: 500,
+            goal_ml: 2000,
+        });
+        // 手工造一个 day 停在已归档的那天
+        p.day.date = "2026-07-19".into();
+        p.day.total_ml = 500;
+        archive_day(&mut p);
+        assert_eq!(p.history.len(), 1, "同一天不重复归档");
+    }
+
+    #[test]
+    fn 归档_超过30天裁掉最老的() {
+        let mut p = fresh();
+        for i in 0..30 {
+            p.history.push(DayStat {
+                date: format!("2026-06-{:02}", i + 1),
+                total_ml: 1000,
+                goal_ml: 2000,
+            });
+        }
+        // 归档第 31 天
+        p.day.date = "2026-07-19".into();
+        p.day.total_ml = 1800;
+        archive_day(&mut p);
+        assert_eq!(p.history.len(), 30, "裁剪到 30 条");
+        assert_eq!(p.history[0].date, "2026-06-02", "最老的一条被丢掉");
+        assert_eq!(p.history.last().unwrap().date, "2026-07-19");
+    }
+
+    #[test]
+    fn 统计_按日期轴补齐缺口天为0() {
+        let mut p = fresh();
+        p.day.date = "2026-07-19".into();
+        p.day.total_ml = 800;
+        p.config.daily_goal_ml = 2000;
+        p.history.push(DayStat {
+            date: "2026-07-17".into(),
+            total_ml: 2100,
+            goal_ml: 2000,
+        });
+        // 缺 07-18
+        let dates = vec![
+            "2026-07-17".to_string(),
+            "2026-07-18".to_string(),
+            "2026-07-19".to_string(),
+        ];
+        let pts = assemble_stats(&p, &dates);
+        assert_eq!(pts.len(), 3);
+        assert_eq!(pts[0].total_ml, 2100);
+        assert_eq!(pts[0].goal_ml, 2000);
+        assert!(!pts[0].is_today);
+        assert_eq!(pts[1].total_ml, 0, "缺口天补 0");
+        assert_eq!(pts[1].goal_ml, 2000, "缺口天目标用当前配置");
+        assert_eq!(pts[2].total_ml, 800);
+        assert!(pts[2].is_today, "最后一天是今天");
+    }
+
+    #[test]
+    fn 统计_今天优先取实时数据不看history() {
+        let mut p = fresh();
+        p.day.date = "2026-07-19".into();
+        p.day.total_ml = 1200;
+        // 就算 history 里意外也有今天，也以 day 为准
+        p.history.push(DayStat {
+            date: "2026-07-19".into(),
+            total_ml: 999,
+            goal_ml: 2000,
+        });
+        let dates = vec!["2026-07-19".to_string()];
+        let pts = assemble_stats(&p, &dates);
+        assert_eq!(pts[0].total_ml, 1200, "今天取 day.total_ml 而非 history");
+        assert!(pts[0].is_today);
     }
 }
