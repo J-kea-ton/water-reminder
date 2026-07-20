@@ -8,19 +8,9 @@
 
 用户是零编程基础的小白。跟他沟通说人话，交付物要能被非技术用户直接用。
 
-## v1 与 v2 并存（重要，别搞混）
+## 历史：曾有个 v1（Python 版），已删除
 
-仓库里两个版本的代码同时存在：
-
-| | v1（已停止开发） | v2（当前版本） |
-|---|---|---|
-| 位置 | `main.py`、`启动提醒.command` | `app/` |
-| 技术栈 | Python 3 + rumps + osascript | Tauri v2（Rust + 静态 HTML/CSS/JS） |
-| 形态 | 菜单栏图标 + 系统通知 | 桌宠 + 菜单栏 + 面板 + 系统通知 |
-| 功能 | 喝水 + 站立提醒 | 只做喝水（站立暂缓） |
-
-- `README.md` 目前写的还是 v1 的安装步骤（要 pip install rumps），**对 v2 用户是错的**，等 v2 打包后要重写。
-- v1 的文件暂时保留不删（用户要求），但不要再往里加功能，也不要参考它的实现方式。rumps 那套坑（Timer.interval setter、Window.clicked 返回值）跟 v2 完全无关。
+早期有个用 Python + rumps 写的菜单栏版本（`main.py`、`启动提醒.command`），2026-07-19 定稿 v2 后已删除，需要时可从 git 历史 v1.0 标签之前找回。现在仓库里只有 v2，不要再参考 rumps 那套实现。
 
 ## v2 技术栈与约束
 
@@ -48,7 +38,6 @@ app/
     tauri.conf.json         三个窗口的配置
     capabilities/default.json  权限声明（加插件要在这里加权限）
 docs/                       设计方案与 spec
-main.py, 启动提醒.command    v1 遗留，别动
 ```
 
 三个窗口都是 transparent + 无边框。pet 窗口 alwaysOnTop + visibleOnAllWorkspaces + skipTaskbar。settings 默认 visible=false。
@@ -109,9 +98,9 @@ cargo test             # 跑 Rust 单测
 
 **没验证过**：**通知从没在打包成 .app 之后验证过**。`cargo tauri dev` 下的通知行为跟正式 .app 可能不同（签名、通知权限）。这是当前最大的未知，优先做。
 
-**暂缓**：站立提醒（v1 有，v2 暂时不做）。
+**暂缓**：站立提醒（暂不做）。
 
-**待办**：`README.md` 还是 v1 的内容，v2 打包后要重写。项目还没进 git。
+**代码管理**：已进 git + GitHub（`git@github.com:J-kea-ton/water-reminder.git`），走 SSH。v1.0 标签 = 2026-07-19 定稿版。改完让本体跑 add/commit/push。
 
 ## 写作与沟通约定
 
