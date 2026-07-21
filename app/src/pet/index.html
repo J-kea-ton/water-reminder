@@ -73,6 +73,30 @@
   #wrap.retracted #petbox{left:-40px!important;animation:peekAnim 4s ease-in-out infinite!important;}
   #wrap.retracted #bubble,#wrap.retracted #celebrate,#wrap.retracted #sleepMark{display:none!important;}
   @keyframes peekAnim{0%,75%,100%{transform:translateX(0) scale(0.92);}35%{transform:translateX(14px) scale(0.92);}}
+
+  /* 自定义饮水量：桌宠内嵌滚轮，不跳面板。适配 240 宽窄窗口 */
+  #mlMask{position:absolute;inset:0;background:rgba(45,35,25,.32);display:none;align-items:flex-end;justify-content:center;z-index:30;}
+  #mlSheet{width:100%;background:#FEFCF8;border-radius:16px 16px 22px 22px;padding:14px 14px 16px;box-sizing:border-box;box-shadow:0 -6px 20px rgba(61,52,46,.18);}
+  #mlTitle{font-size:14px;font-weight:600;color:#3D342E;text-align:center;margin-bottom:8px;}
+  #mlPickWrap{position:relative;height:108px;display:flex;justify-content:center;}
+  #mlCol{position:relative;height:108px;width:110px;overflow-y:scroll;scroll-snap-type:y mandatory;-ms-overflow-style:none;scrollbar-width:none;z-index:1;}
+  #mlCol::-webkit-scrollbar{display:none;}
+  #mlCol .pad{height:36px;}
+  #mlCol .n{scroll-snap-align:center;height:36px;line-height:36px;text-align:center;font-size:20px;color:#A89C8E;transition:color .15s,transform .15s;cursor:pointer;}
+  #mlCol .n.act{color:#0E7CBE;font-weight:700;transform:scale(1.06);}
+  #mlCol.typing .n.act{color:#A89C8E;font-weight:400;transform:none;}
+  #mlBand{position:absolute;left:22px;right:22px;top:36px;height:36px;pointer-events:none;background:rgba(14,124,190,.06);border-top:0.5px solid #E7DECF;border-bottom:0.5px solid #E7DECF;border-radius:8px;}
+  #mlInputRow{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:6px;}
+  #mlManual{width:70px;height:32px;border:1.5px solid #E7DECF;border-radius:10px;text-align:center;font-size:15px;font-family:inherit;background:#FEFDFB;color:#3D342E;outline:none;-moz-appearance:textfield;}
+  #mlManual::-webkit-inner-spin-button,#mlManual::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+  #mlManual:focus{border-color:#0E7CBE;}
+  .mlHint{font-size:12px;color:#A89C8E;}
+  #mlErr{height:14px;margin-top:4px;text-align:center;font-size:11px;color:#B94A3A;visibility:hidden;}
+  #mlErr.show{visibility:visible;}
+  #mlBtns{display:flex;gap:8px;margin-top:10px;}
+  #mlBtns button{flex:1;height:36px;border:none;border-radius:9999px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+  #mlCancel{background:#F2ECE1;color:#7A6E62;}
+  #mlOk{background:#0E7CBE;color:#fff;}
 </style>
 </head>
 <body>
@@ -170,6 +194,26 @@
         <text class="zz" x="176" y="28" font-size="18" font-weight="700" fill="#8FA6B0">Z</text>
       </g>
     </svg>
+  </div>
+
+  <div id="mlMask">
+    <div id="mlSheet">
+      <div id="mlTitle">喝了多少 ml？</div>
+      <div id="mlPickWrap">
+        <div id="mlCol"></div>
+        <div id="mlBand"></div>
+      </div>
+      <div id="mlInputRow">
+        <span class="mlHint">或直接输入</span>
+        <input type="number" id="mlManual" min="10" max="2000" value="200" />
+        <span class="mlHint">ml</span>
+      </div>
+      <div id="mlErr">请输入 10 到 2000 之间的数字</div>
+      <div id="mlBtns">
+        <button id="mlCancel">取消</button>
+        <button id="mlOk">记这么多</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -301,11 +345,14 @@
     const b=e.target.closest('.bopt'); if(!b) return;
     if(bubble.dataset.kind === 'amount'){
       const act = b.dataset.act;
+      if(act === 'custom'){
+        // 内嵌滚轮选量，不跳面板
+        closeBubble();
+        openCustomSheet();
+        return;
+      }
       if(act === 'drink'){
         await invoke('drink', {ml: +b.dataset.ml});
-      } else if(act === 'custom'){
-        // 桌宠不藏，主面板浮上来用现成的自定义组件
-        await invoke('show_window', {label:'main'});
       } else if(act === 'snooze'){
         await invoke('snooze');
       }
@@ -424,6 +471,56 @@
   listen('pet-expand',()=>{ isRetracted=false; wrap.classList.remove('retracted'); });
 
   petbox.addEventListener('pointerdown',(e)=>{ petDownX=e.screenX; petDownY=e.screenY; invoke('pet_touched'); });
+
+  // 自定义饮水量滚动选择器（桌宠内嵌，点「自定义」直接在气泡窗里选，不跳面板）
+  const ML_VALUES=[50,100,150,200,250,300,350,400,450,500,600,700,800,900,1000];
+  const mlCol=document.getElementById('mlCol'), mlManual=document.getElementById('mlManual'), mlMask=document.getElementById('mlMask'), mlErr=document.getElementById('mlErr');
+  mlCol.innerHTML='<div class="pad"></div>'+ML_VALUES.map(v=>'<div class="n" data-v="'+v+'">'+v+'</div>').join('')+'<div class="pad"></div>';
+  let mlWheelDriving=false;
+  function mlMarkActive(){
+    const idx=Math.round(mlCol.scrollTop/36);
+    mlCol.querySelectorAll('.n').forEach((el,i)=>el.classList.toggle('act',i===idx));
+    if(mlWheelDriving&&idx>=0&&idx<ML_VALUES.length) mlManual.value=ML_VALUES[idx];
+  }
+  mlCol.addEventListener('scroll',()=>mlMarkActive());
+  ['pointerdown','wheel','touchstart'].forEach(ev=>
+    mlCol.addEventListener(ev,()=>{ mlWheelDriving=true; mlCol.classList.remove('typing'); mlManual.blur(); },{passive:true}));
+  mlCol.addEventListener('click',(e)=>{
+    const n=e.target.closest('.n'); if(!n) return;
+    mlWheelDriving=true; mlManual.blur();
+    mlCol.scrollTo({top:ML_VALUES.indexOf(+n.dataset.v)*36,behavior:'smooth'});
+  });
+  mlManual.addEventListener('focus',()=>{ mlWheelDriving=false; });
+  let lastCustomMl=200;
+  function openCustomSheet(){
+    mlMask.style.display='flex';
+    mlErr.classList.remove('show'); mlManual.style.borderColor='';
+    mlWheelDriving=false; mlCol.classList.remove('typing');
+    let idx=ML_VALUES.indexOf(lastCustomMl);
+    if(idx<0){ let min=Infinity; ML_VALUES.forEach((v,i)=>{ if(Math.abs(v-lastCustomMl)<min){min=Math.abs(v-lastCustomMl);idx=i;} }); }
+    mlManual.value=lastCustomMl;
+    requestAnimationFrame(()=>{ mlCol.scrollTop=idx*36; mlMarkActive(); });
+  }
+  document.getElementById('mlCancel').addEventListener('click',()=>{ mlMask.style.display='none'; });
+  mlMask.addEventListener('click',(e)=>{ if(e.target===mlMask) mlMask.style.display='none'; });
+  document.getElementById('mlOk').addEventListener('click',()=>{
+    const v=Math.round(parseFloat(mlManual.value))||0; // 小数四舍五入
+    if(v>=10&&v<=2000){
+      mlManual.value=v;
+      mlErr.classList.remove('show'); mlManual.style.borderColor='';
+      lastCustomMl=v; invoke('drink',{ml:v}); mlMask.style.display='none';
+    } else {
+      mlErr.classList.add('show'); mlManual.style.borderColor='#E7A99C';
+    }
+  });
+  mlManual.addEventListener('input',()=>{
+    mlErr.classList.remove('show'); mlManual.style.borderColor='';
+    mlCol.classList.add('typing');
+  });
+  mlManual.addEventListener('keydown',(e)=>{ if(e.key==='Enter') document.getElementById('mlOk').click(); });
+  document.addEventListener('keydown',(e)=>{
+    if(e.key==='Escape' && mlMask.style.display==='flex') mlMask.style.display='none';
+  });
 
   // 若项目里放了 pet.png（你的原图），自动用它替换内置卡通
   const petimg=document.getElementById('petimg');
