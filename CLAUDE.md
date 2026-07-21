@@ -104,7 +104,7 @@ cargo test             # 跑 Rust 单测
 
 **代码管理**：已进 git + GitHub（`git@github.com:J-kea-ton/water-reminder.git`），走 SSH。改完让本体跑 add/commit/push。
 
-**版本管理**：`tauri.conf.json` 的 `version` 是唯一版本号来源，改功能要同步升它（语义化版本：加功能升次版本号，修 bug 升修订号），并打对应 git tag（`vX.Y.Z`）推到云端。历史标签：v1.0 = 2026-07-19 定稿版（当时 version 仍是 0.1.0，标签号和 version 不一致，属历史遗留）；**当前 v0.3.0**（2026-07-21，主页/统计页布局重排、桌宠拖动不再误弹气泡、气泡点「喝了」展开量选支持整杯/半杯/一小口/自定义/待会儿；version 与 tag 已对齐）。
+**版本管理**：`tauri.conf.json` 的 `version` 是唯一版本号来源，改功能要同步升它（语义化版本：加功能升次版本号，修 bug 升修订号），并打对应 git tag（`vX.Y.Z`）推到云端。历史标签：v1.0 = 2026-07-19 定稿版（当时 version 仍是 0.1.0，标签号和 version 不一致，属历史遗留）；**当前 v0.4.0**（2026-07-21，pet 窗口高度 260→300 让气泡 5 选项完整显示、主页底部行/子按钮行向下微调、统计页 banner 用 flex filler 视觉居中、active 气泡按钮「喝了一杯」→「喝了」；version 与 tag 已对齐）。
 
 ## 写作与沟通约定
 
