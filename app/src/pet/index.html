@@ -6,7 +6,7 @@
 <title>喝水搭子</title>
 <style>
   html,body{margin:0;height:100%;background:transparent;overflow:hidden;font-family:-apple-system,"PingFang SC",sans-serif;-webkit-user-select:none;user-select:none;}
-  #wrap{position:relative;width:240px;height:260px;}
+  #wrap{position:relative;width:240px;height:300px;}
   #petbox{position:absolute;left:52px;bottom:2px;width:150px;height:178px;background:rgba(255,255,255,0.02);border-radius:22px;cursor:grab;animation:breathe 3.4s ease-in-out infinite;transform-origin:center bottom;}
   #petbox:active{cursor:grabbing;}
   #petbox.hop{animation:hop .6s ease !important;}
@@ -60,7 +60,7 @@
     transform:rotate(45deg);border-radius:0 0 5px 0;}
   #drops{position:absolute;left:120px;top:150px;display:none;z-index:6;}
 
-  #celebrate{position:absolute;left:60px;top:32px;width:140px;height:60px;display:none;pointer-events:none;z-index:7;}
+  #celebrate{position:absolute;left:60px;top:72px;width:140px;height:60px;display:none;pointer-events:none;z-index:7;}
   #celebrate.on{display:block;}
   .spk{animation:sparkleF 1.4s ease forwards;}
   .spk:nth-child(2){animation-delay:.15s;} .spk:nth-child(3){animation-delay:.3s;} .spk:nth-child(4){animation-delay:.45s;}
@@ -349,7 +349,7 @@
       const map={pause:'在休息，'+recover, dnd:'午休中，'+recover, offhours:'下班啦，'+recover};
       openBubble(map[reason]||'在休息中', '知道了', null, 'sleep');
     } else {
-      openBubble('该喝水啦', '喝了一杯', '打开面板', 'active');
+      openBubble('该喝水啦', '喝了', '打开面板', 'active');
     }
   });
 
