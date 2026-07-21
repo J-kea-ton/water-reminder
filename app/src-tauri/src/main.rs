@@ -991,6 +991,25 @@ mod tests {
         );
     }
 
+    // 守护「下次喝水」计时：喝水后基准往后推、撤销后退回。活跃时段设全天避免被非活跃态拦截。
+    #[test]
+    fn next_label_喝水推后撤销退回() {
+        let mut p = fresh();
+        p.config.active_start = "00:00".into();
+        p.config.active_end = "23:59".into();
+        p.config.interval_minutes = 60;
+        let t = now_epoch();
+        apply_drink(&mut p, Some(200), t);
+        let l1 = next_label(&p);
+        apply_drink(&mut p, Some(200), t + 1800); // 30 分钟后第二杯
+        let l2 = next_label(&p);
+        apply_undo(&mut p); // 撤销第二杯
+        let l3 = next_label(&p);
+        println!("第一杯基准={l1}  第二杯基准={l2}  撤销后={l3}");
+        assert_ne!(l1, l2, "第二杯喝水后下次时间应往后推 30 分钟");
+        assert_eq!(l1, l3, "撤销后下次时间应退回上一杯的基准");
+    }
+
     #[test]
     fn drink_默认用杯子容量() {
         let mut p = fresh();
