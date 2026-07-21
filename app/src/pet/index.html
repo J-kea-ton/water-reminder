@@ -201,8 +201,13 @@
     else {eyes.innerHTML=nEyes;mouth.innerHTML=nMouth;zzz.style.display='none';}
   }
   function setBase(s,r,rec){ base=s; reason=r||''; recover=rec||''; if(!bubbleOpen && onbStep<0) face(s); }
-  function closeBubble(){ bubble.style.display='none'; bubbleOpen=false; wrap.className=''; bubble.dataset.kind=''; bopts.style.display='none'; brow.style.display='flex'; bubble.classList.remove('onb'); onbSkip.style.display='none'; onbDots.style.display='none'; face(base); }
+  // alert 气泡若 120 秒无人应答，替用户选待会儿，避免气泡一直在桌面挂着
+  let alertAutoSnoozeT=null;
+  function clearAutoSnooze(){ clearTimeout(alertAutoSnoozeT); alertAutoSnoozeT=null; }
+  function closeBubble(){ clearAutoSnooze(); bubble.style.display='none'; bubbleOpen=false; wrap.className=''; bubble.dataset.kind=''; bopts.style.display='none'; brow.style.display='flex'; bubble.classList.remove('onb'); onbSkip.style.display='none'; onbDots.style.display='none'; face(base); }
   function openBubble(text, mainLabel, altLabel, kind){
+    // 换气泡就取消 alert 的自动待会儿（新气泡有自己的意图，除非它本身也是 alert 再启新计时）
+    clearAutoSnooze();
     btext.textContent=text; bmain.textContent=mainLabel;
     if(altLabel){balt.textContent=altLabel;balt.style.display='';} else balt.style.display='none';
     bubble.dataset.kind=kind||'';
@@ -375,6 +380,13 @@
     shake();
     petbox.classList.remove('hop'); void petbox.offsetWidth; petbox.classList.add('hop');
     openBubble('该喝水啦','喝了','待会儿','alert');
+    // 用户 120 秒没理，替他选待会儿（清计时 = 用户已互动或换气泡了，别再自动）
+    alertAutoSnoozeT = setTimeout(async ()=>{
+      if(bubbleOpen && (bubble.dataset.kind==='alert' || bubble.dataset.kind==='amount')){
+        await invoke('snooze');
+        closeBubble();
+      }
+    }, 120000);
   });
   listen('pet-happy', ()=> happy());
   listen('pet-milestone', e=> celebrateOn(e.payload && e.payload.kind));
