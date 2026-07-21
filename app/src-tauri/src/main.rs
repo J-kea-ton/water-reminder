@@ -543,83 +543,6 @@ fn pet_go_home(app: AppHandle, state: State<AppState>) {
     }
 }
 
-// 切到别的 app 时把水豚挪到屏幕右下角空位（完整可见，不藏边）
-#[tauri::command]
-fn pet_dodge(app: AppHandle) {
-    if let Some(win) = app.get_webview_window("pet") {
-        reset_pet_position_impl(&win);
-    }
-}
-
-// 桌宠挡住任何 app 窗口时，挪到桌面真正的空白处；没挡住就原地不动。
-fn do_avoid(app: &AppHandle, obstacles: &[(f64, f64, f64, f64)]) {
-    let pet = match app.get_webview_window("pet") {
-        Some(w) => w,
-        None => return,
-    };
-    if !pet.is_visible().unwrap_or(false) {
-        return;
-    }
-    let scale = pet.scale_factor().unwrap_or(1.0);
-    let (pp, ps) = match (pet.outer_position(), pet.outer_size()) {
-        (Ok(a), Ok(b)) => (a, b),
-        _ => return,
-    };
-    // 换算成逻辑坐标，和 CGWindow 的单位对齐
-    let pet_rect = (
-        pp.x as f64 / scale,
-        pp.y as f64 / scale,
-        ps.width as f64 / scale,
-        ps.height as f64 / scale,
-    );
-
-    // 其他 app 的窗口 + 我们自己的面板/设置窗（同 PID 被过滤掉了，这里加回来）
-    let mut obs: Vec<(f64, f64, f64, f64)> = obstacles.to_vec();
-    for label in ["main", "settings"] {
-        if let Some(w) = app.get_webview_window(label) {
-            if w.is_visible().unwrap_or(false) {
-                if let (Ok(p), Ok(s)) = (w.outer_position(), w.outer_size()) {
-                    obs.push((
-                        p.x as f64 / scale,
-                        p.y as f64 / scale,
-                        s.width as f64 / scale,
-                        s.height as f64 / scale,
-                    ));
-                }
-            }
-        }
-    }
-
-    let blocking: f64 = obs
-        .iter()
-        .map(|o| screenscan::overlap_area(pet_rect, *o))
-        .sum();
-    if blocking == 0.0 {
-        return; // 没挡住任何窗口，原地不动
-    }
-
-    let mon = match pet.primary_monitor() {
-        Ok(Some(m)) => m,
-        _ => return,
-    };
-    let msz = mon.size();
-    let mpos = mon.position();
-    let screen = (
-        mpos.x as f64 / scale,
-        mpos.y as f64 / scale,
-        msz.width as f64 / scale,
-        msz.height as f64 / scale,
-    );
-    if let Some((nx, ny)) = screenscan::find_free_spot(screen, pet_rect.2, pet_rect.3, &obs) {
-        let _ = pet.set_position(tauri::LogicalPosition::new(nx, ny));
-    }
-}
-
-#[tauri::command]
-fn pet_avoid_windows(app: AppHandle) {
-    let obs = screenscan::other_app_window_rects(std::process::id() as i64);
-    do_avoid(&app, &obs);
-}
 
 // 前端拖动桌宠时记一下时刻，刚拖完几秒内不自动挪
 #[tauri::command]
@@ -756,8 +679,6 @@ fn main() {
             pet_retract,
             pet_expand,
             pet_go_home,
-            pet_dodge,
-            pet_avoid_windows,
             pet_touched,
             reset_today,
             mark_onboarding,

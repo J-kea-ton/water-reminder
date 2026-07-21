@@ -90,7 +90,7 @@ cargo test             # 跑 Rust 单测
 
 **桌宠避让（已收敛为方案 A）**：只保留「其他 app 全屏时桌宠缩到屏幕边缘露个头」。**打开面板时不再自动挪桌宠**（改过几轮，效果都不好，用户觉得乱跑不受控）。挡住了让用户手动拖，或用菜单栏「柚柚回家」。
 
-因此 `pet_avoid_windows` → `do_avoid` → `screenscan::find_free_spot` 整条链现在没有调用方，是死代码。用户要求先留着不删（以后进 git 再规范处理）。它注册在 `generate_handler!` 里所以编译器不报 dead_code 警告，别以为它还活着。
+因此「打开面板时自动挪桌宠」这套避让逻辑（`pet_avoid_windows` → `do_avoid` → `pet_dodge` → `screenscan::find_free_spot` / `overlap_area`）成了死代码，**已于 2026-07-21 删除**。注意 `pet_saved_pos`（全屏藏边缩边时保存位置）、`other_app_window_rects`（提醒线程用）、`reset_pet_position_impl`（柚柚回家用）是另一套活代码，未动。
 
 ## 状态
 
