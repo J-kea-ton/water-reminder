@@ -104,7 +104,9 @@ cargo test             # 跑 Rust 单测
 
 **代码管理**：已进 git + GitHub（`git@github.com:J-kea-ton/water-reminder.git`），走 SSH。改完让本体跑 add/commit/push。
 
-**版本管理**：`tauri.conf.json` 的 `version` 是唯一版本号来源，改功能要同步升它（语义化版本：加功能升次版本号，修 bug 升修订号），并打对应 git tag（`vX.Y.Z`）推到云端。历史标签：v1.0 = 2026-07-19 定稿版（当时 version 仍是 0.1.0，标签号和 version 不一致，属历史遗留）；**当前 v0.6.0**（2026-07-21，桌宠气泡「自定义」改为内嵌滚轮选量——把主面板的滚动选量组件移植进 pet 窗口，不再跳首页；滚轮 sheet 高 273 放进 300 高 wrap 不溢出）。
+**版本管理**：`tauri.conf.json` 的 `version` 是唯一版本号来源，改功能要同步升它（语义化版本：加功能升次版本号，修 bug 升修订号），并打对应 git tag（`vX.Y.Z`）推到云端。历史标签：v1.0 = 2026-07-19 定稿版（当时 version 仍是 0.1.0，标签号和 version 不一致，属历史遗留）；**当前 v0.6.1**（2026-07-21，桌宠自定义滚轮改 iOS 圆柱质感：去掉黑遮罩、mlCol 加 perspective + 每项 JS 算 rotateX/opacity、中间两条 hairline、上下渐隐遮罩、按钮「记这么多」→「确定」）。
+
+上一版 v0.6.0（桌宠气泡「自定义」改为内嵌滚轮选量，把主面板滚动选量组件移植进 pet 窗口，不再跳首页；sheet 高 273 放进 300 高 wrap 不溢出）。
 
 历史坑：改前端布局时务必检查 render()/JS 是否覆盖了 CSS 的 display（v0.5.1 修的 banner 未居中就是 `$('content').style.display='block'` 覆盖了 CSS 的 flex 导致 margin:auto 失效）。
 
