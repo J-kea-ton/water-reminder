@@ -274,9 +274,40 @@
     if(onbStep<=0) return; // 第一步右滑不动
     onbStep--; renderOnb();
   }
-  // 选杯子：存回配置再进下一步
+  // 点「喝了」后展开：整杯 / 半杯 / 一小口 / 自定义 / 待会儿
+  // 用户常喝不满一杯，直接给量选，不用再跳面板
+  function showDrinkOptions(){
+    const cup = (petCfg && petCfg.cupMl) || 300;
+    const half = Math.round(cup/2);
+    btext.textContent = '喝了多少呢？';
+    bubble.dataset.kind = 'amount';
+    brow.style.display = 'none';
+    bopts.style.display = 'flex';
+    bopts.innerHTML =
+      '<button class="bopt" data-act="drink" data-ml="'+cup+'"><span>整杯</span><span class="ov">'+cup+'ml</span></button>'+
+      '<button class="bopt" data-act="drink" data-ml="'+half+'"><span>半杯</span><span class="ov">'+half+'ml</span></button>'+
+      '<button class="bopt" data-act="drink" data-ml="50"><span>一小口</span><span class="ov">50ml</span></button>'+
+      '<button class="bopt" data-act="custom"><span>自定义</span><span class="ov">开面板选</span></button>'+
+      '<button class="bopt" data-act="snooze"><span>待会儿</span><span class="ov">15分钟后</span></button>';
+  }
+
+  // bopts 两处用途：引导选杯子 / 记水量选择，靠 kind 分流
   bopts.addEventListener('click', async (e)=>{
     const b=e.target.closest('.bopt'); if(!b) return;
+    if(bubble.dataset.kind === 'amount'){
+      const act = b.dataset.act;
+      if(act === 'drink'){
+        await invoke('drink', {ml: +b.dataset.ml});
+      } else if(act === 'custom'){
+        // 桌宠不藏，主面板浮上来用现成的自定义组件
+        await invoke('show_window', {label:'main'});
+      } else if(act === 'snooze'){
+        await invoke('snooze');
+      }
+      closeBubble();
+      return;
+    }
+    // 新手引导选杯子：存回配置再进下一步
     const ml=+b.dataset.ml, goal=+b.dataset.goal;
     if(petCfg){
       petCfg.cupMl=ml; petCfg.dailyGoalMl=goal;
@@ -298,7 +329,10 @@
 
   // 点桌宠（头/身都算）：弹打卡气泡。原来的头顶菜单已去掉。
   let clickCount=0, clickT;
+  let petDownX=0, petDownY=0; // 记按下位置，用来区分拖动和点击
   petbox.addEventListener('click',(e)=>{
+    // 拖动桌宠后松手也会触发 click，按下到松手位移明显就是拖动，不弹气泡
+    if(Math.abs(e.screenX-petDownX)+Math.abs(e.screenY-petDownY)>6) return;
     if(isRetracted){ invoke('show_window',{label:'main'}); return; }
     if(onbStep>=0) return;
     // 连点逗它
@@ -324,7 +358,8 @@
     const kind=bubble.dataset.kind;
     if(kind==='onboard'){ if(!justSwiped) nextOnb(); return; } // 滑动已翻页就别再点一次
     if(kind==='sleep' || kind==='milestone'){ closeBubble(); return; }
-    await invoke('drink');
+    // alert / active：展开量选，不直接按整杯记（用户常喝不满）
+    showDrinkOptions();
   });
   balt.addEventListener('click', async (e)=>{
     e.stopPropagation();
@@ -376,7 +411,7 @@
   listen('pet-retract',()=>{ isRetracted=true; wrap.classList.add('retracted'); if(bubbleOpen)closeBubble(); });
   listen('pet-expand',()=>{ isRetracted=false; wrap.classList.remove('retracted'); });
 
-  petbox.addEventListener('mousedown',()=> invoke('pet_touched'));
+  petbox.addEventListener('pointerdown',(e)=>{ petDownX=e.screenX; petDownY=e.screenY; invoke('pet_touched'); });
 
   // 若项目里放了 pet.png（你的原图），自动用它替换内置卡通
   const petimg=document.getElementById('petimg');
