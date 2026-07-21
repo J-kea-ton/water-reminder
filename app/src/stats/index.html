@@ -205,7 +205,7 @@
 
   function render(){
     const hasData = points.some(p=>p.totalMl>0);
-    $('content').style.display = hasData ? 'block' : 'none';
+    $('content').style.display = hasData ? 'flex' : 'none';
     $('empty').style.display = hasData ? 'none' : 'flex';
     if(!hasData) return;
 
