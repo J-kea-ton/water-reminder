@@ -394,11 +394,12 @@
     // 连点逗它
     clickCount++; clearTimeout(clickT); clickT=setTimeout(()=>{clickCount=0;},1500);
     if(clickCount>=6){ clickCount=0; tease(); return; } // 要连点6下才算逗它，避免跟记水误触
-    // 碎碎念/庆祝气泡不该挡住你记水：直接换成打卡气泡
+    // 闲聊/庆祝气泡：点一下只关掉，不强行切成记水气泡（想记水再点一次即可）
+    // 其他气泡开着时也别插新的，保持当前交互
     if(bubbleOpen){
       const k=bubble.dataset.kind;
-      if(k==='chat' || k==='milestone') closeBubble();
-      else return;
+      if(k==='chat' || k==='milestone'){ closeBubble(); }
+      return;
     }
     if(base==='sleep'){
       shake();
