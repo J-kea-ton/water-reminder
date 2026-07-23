@@ -880,8 +880,18 @@ fn main() {
 
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while running tauri application")
+        .run(|app_handle, event| {
+            // 用户点系统通知 / 菜单栏图标激活 App 时，把主面板浮到前面。
+            // Accessory 模式下没有 Dock 图标，Reopen 是 App 被从系统层激活的通用信号。
+            if let tauri::RunEvent::Reopen { .. } = event {
+                if let Some(w) = app_handle.get_webview_window("main") {
+                    let _ = w.show();
+                    let _ = w.set_focus();
+                }
+            }
+        });
 }
 
 #[cfg(test)]
