@@ -687,9 +687,10 @@ fn main() {
         .setup(|app| {
             let handle = app.handle().clone();
 
-            // 桌宠 + 菜单栏形态，不占 Dock 图标（Accessory 模式）
+            // Regular 模式：Dock 显示图标，通知点击才能激活 App 触发 Reopen（进而弹主面板）。
+            // 曾用 Accessory 隐藏 Dock 图标，但那样通知点了没反应；权衡后选可用性>无 Dock。
             #[cfg(target_os = "macos")]
-            let _ = app.handle().set_activation_policy(tauri::ActivationPolicy::Accessory);
+            let _ = app.handle().set_activation_policy(tauri::ActivationPolicy::Regular);
 
             let data_dir = app
                 .path()
