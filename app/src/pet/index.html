@@ -10,8 +10,10 @@
   #petbox{position:absolute;left:52px;bottom:2px;width:150px;height:178px;background:rgba(255,255,255,0.02);border-radius:22px;cursor:grab;animation:breathe 3.4s ease-in-out infinite;transform-origin:center bottom;}
   #petbox:active{cursor:grabbing;}
   #petbox.hop{animation:hop .6s ease !important;}
-  #petsvg{width:150px;height:auto;display:block;margin:0 auto;pointer-events:none;}
-  #petimg{width:150px;height:auto;display:none;margin:0 auto;pointer-events:none;}
+  /* 默认显示 pet.png（正牌形象），内置 SVG 只在 PNG 加载失败时才当兜底
+     调换默认 display 是为了避免首次打开时 PNG 还没读完 → SVG 短暂露头 */
+  #petsvg{width:150px;height:auto;display:none;margin:0 auto;pointer-events:none;}
+  #petimg{width:150px;height:auto;display:block;margin:0 auto;pointer-events:none;}
   @keyframes breathe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-2px) scale(1.015)}}
   @keyframes blink{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
   @keyframes hop{0%{transform:translateY(0)}30%{transform:translateY(-16px)}60%{transform:translateY(0)}100%{transform:translateY(0)}}
@@ -537,8 +539,7 @@
 
   // 若项目里放了 pet.png（你的原图），自动用它替换内置卡通
   const petimg=document.getElementById('petimg');
-  petimg.addEventListener('load', ()=>{ petsvg.style.display='none'; petimg.style.display='block'; });
-  petimg.addEventListener('error', ()=>{ petimg.style.display='none'; });
+  petimg.addEventListener('error', ()=>{ petimg.style.display='none'; petsvg.style.display='block'; });
 
   (async ()=>{
     try{
