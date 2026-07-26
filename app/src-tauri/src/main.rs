@@ -686,10 +686,11 @@ fn main() {
         .setup(|app| {
             let handle = app.handle().clone();
 
-            // Regular 模式：Dock 显示图标，通知点击才能激活 App 触发 Reopen（进而弹主面板）。
-            // 曾用 Accessory 隐藏 Dock 图标，但那样通知点了没反应；权衡后选可用性>无 Dock。
+            // Accessory 模式：不占 Dock 图标。通知点击不再依赖 App 激活链路
+            // （v0.6.6 已改用 notify-rust 的 action button 直接跳主面板），Regular 不再必要。
+            // 若将来退回"点通知激活"方案，改回 Regular 即可（Reopen 监听已留着）。
             #[cfg(target_os = "macos")]
-            let _ = app.handle().set_activation_policy(tauri::ActivationPolicy::Regular);
+            let _ = app.handle().set_activation_policy(tauri::ActivationPolicy::Accessory);
 
             let data_dir = app
                 .path()
