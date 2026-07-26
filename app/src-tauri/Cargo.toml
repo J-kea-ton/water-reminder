@@ -15,6 +15,9 @@ tauri-plugin-autostart = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 chrono = "0.4"
+# 底层 macOS 通知库：tauri-plugin-notification 桌面端不支持 action button，
+# 换 notify-rust 直接调 macOS 原生通知，能加「打开面板」按钮和点击回调
+notify-rust = "4"
 
 # 读取屏幕上所有窗口的位置，用来给桌宠找桌面空白处（不需要辅助功能授权）
 # objc2-app-kit：给桌宠窗口设 FullScreenAuxiliary，否则别的 app 全屏时桌宠不渲染。

@@ -13,7 +13,6 @@ use std::time::Duration;
 use tauri::menu::{MenuBuilder, MenuItemBuilder};
 use tauri::tray::TrayIconBuilder;
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, State};
-use tauri_plugin_notification::NotificationExt;
 
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -865,15 +864,30 @@ fn main() {
                         let p = state.persisted.lock().unwrap();
                         p.config.sound_enabled
                     };
-                    let mut b = handle
-                        .notification()
-                        .builder()
-                        .title("该喝水啦")
-                        .body("起身接杯水，陪柚柚喝一口。");
-                    if sound_on {
-                        b = b.sound("default");
-                    }
-                    let _ = b.show();
+                    // 用 notify-rust 直接调 macOS 原生通知，带「打开面板」action button。
+                    // tauri-plugin-notification 桌面端不支持 action，所以绕开它。
+                    // 通知发送和等待用户点击都在独立线程里做，不阻塞提醒引擎主循环。
+                    let handle_for_notify = handle.clone();
+                    std::thread::spawn(move || {
+                        let mut n = notify_rust::Notification::new();
+                        n.summary("该喝水啦")
+                            .body("起身接杯水，陪柚柚喝一口。")
+                            .action("open-panel", "打开面板");
+                        if sound_on {
+                            n.sound_name("default");
+                        }
+                        if let Ok(handle_notif) = n.show() {
+                            // 阻塞等用户互动（点按钮 / 关闭 / 超时消失）
+                            handle_notif.wait_for_action(|action| {
+                                if action == "open-panel" {
+                                    if let Some(w) = handle_for_notify.get_webview_window("main") {
+                                        let _ = w.show();
+                                        let _ = w.set_focus();
+                                    }
+                                }
+                            });
+                        }
+                    });
                     let _ = handle.emit("pet-alert", ());
                 }
                 let _ = handle.emit("updated", snap);
