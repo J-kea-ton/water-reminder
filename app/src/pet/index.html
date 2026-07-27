@@ -416,7 +416,9 @@
     e.stopPropagation();
     const kind=bubble.dataset.kind;
     if(kind==='onboard'){ if(!justSwiped) nextOnb(); return; } // 滑动已翻页就别再点一次
-    if(kind==='sleep' || kind==='milestone'){ closeBubble(); return; }
+    // sleep/milestone/chat 气泡里的按钮：只是回应/关闭，不该跳记水选项
+    // （v0.6.3 修过"点桌宠身体"的路径，这里补修"点气泡按钮"的路径）
+    if(kind==='sleep' || kind==='milestone' || kind==='chat'){ closeBubble(); return; }
     // alert / active：展开量选，不直接按整杯记（用户常喝不满）
     showDrinkOptions();
   });
