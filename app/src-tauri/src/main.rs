@@ -602,6 +602,16 @@ fn pet_touched(state: State<AppState>) {
     *state.last_drag_epoch.lock().unwrap() = now_epoch();
 }
 
+// 前端切换桌宠 orientation（上/下自适应）时补偿窗口 y，避免桌宠视觉跳变
+#[tauri::command]
+fn pet_shift_y(app: AppHandle, dy: i32) {
+    if let Some(w) = app.get_webview_window("pet") {
+        if let Ok(p) = w.outer_position() {
+            let _ = w.set_position(PhysicalPosition::new(p.x, p.y + dy));
+        }
+    }
+}
+
 // 重置今天喝水杯数（方便测试彩虹里程碑）
 #[tauri::command]
 fn reset_today(app: AppHandle, state: State<AppState>) -> Snapshot {
@@ -732,6 +742,7 @@ fn main() {
             pet_expand,
             pet_go_home,
             pet_touched,
+            pet_shift_y,
             reset_today,
             mark_onboarding,
             quit_app
