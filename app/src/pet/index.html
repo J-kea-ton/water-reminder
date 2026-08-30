@@ -504,8 +504,17 @@
     // 补偿窗口 y：从 bottom 切 top 时桌宠视觉往上跳 delta，窗口 y 加 delta 抵消；反之亦然
     try{ await invoke('pet_shift_y', { dy: shouldTop ? PET_FLIP_DELTA : -PET_FLIP_DELTA }); }catch(e){}
   }
-  // 拖动结束时切一次；打开气泡前也 double check
-  petbox.addEventListener('pointerup', ()=>{ setTimeout(updatePetOrientation, 0); });
+  // 用轮询检测窗口位置变化，触发 orientation 切换。
+  // 不用 pointerup 因为 tauri 的 data-tauri-drag-region 走 macOS 原生窗口拖动，
+  // pointer 事件会被吞掉，前端根本收不到。
+  // 只在 y 变化时才 run updatePetOrientation，开销可忽略。
+  let lastScreenY = window.screenY;
+  setInterval(()=>{
+    if(window.screenY !== lastScreenY){
+      lastScreenY = window.screenY;
+      updatePetOrientation();
+    }
+  }, 500);
   // 启动后跑一次初始判定
   setTimeout(updatePetOrientation, 500);
 
