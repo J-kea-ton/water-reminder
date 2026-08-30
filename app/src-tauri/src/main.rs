@@ -38,6 +38,59 @@ struct Snapshot {
     day_just_reset: bool,       // 首次拉取且今天还没喝→用于主窗展示「新的一天」
 }
 
+// 检查并修正开机自启 plist 的可执行路径，防止 App 挪位置后自启失效。
+// 只在 plist 已存在时修正（=用户开过自启），路径正确就不动，不对就重写并重新 load。
+#[cfg(target_os = "macos")]
+fn fix_autostart_plist_if_stale() {
+    let home = match std::env::var_os("HOME") {
+        Some(h) => std::path::PathBuf::from(h),
+        None => return,
+    };
+    let plist_path = home.join("Library/LaunchAgents/爱上喝水.plist");
+    if !plist_path.exists() {
+        return; // 用户没开自启，不管
+    }
+    let current_exe = match std::env::current_exe() {
+        Ok(p) => p,
+        Err(_) => return,
+    };
+    let exe_str = current_exe.to_string_lossy().to_string();
+    let old = match std::fs::read_to_string(&plist_path) {
+        Ok(s) => s,
+        Err(_) => return,
+    };
+    if old.contains(&exe_str) {
+        return; // 路径已正确，不动
+    }
+    let new = format!(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">
+<plist version=\"1.0\">
+  <dict>
+  <key>Label</key>
+  <string>爱上喝水</string>
+  <key>ProgramArguments</key>
+  <array><string>{}</string></array>
+  <key>RunAtLoad</key>
+  <true/>
+  </dict>
+</plist>
+",
+        exe_str
+    );
+    if std::fs::write(&plist_path, new).is_ok() {
+        // 让 launchd 立即感知更新；unload 可能失败（本来就没加载），忽略
+        let _ = std::process::Command::new("launchctl")
+            .arg("unload")
+            .arg(&plist_path)
+            .output();
+        let _ = std::process::Command::new("launchctl")
+            .arg("load")
+            .arg(&plist_path)
+            .output();
+    }
+}
+
 fn ensure_today(p: &mut Persisted) -> bool {
     let t = today_str();
     if p.day.date != t {
@@ -691,6 +744,12 @@ fn main() {
             // 若将来退回"点通知激活"方案，改回 Regular 即可（Reopen 监听已留着）。
             #[cfg(target_os = "macos")]
             let _ = app.handle().set_activation_policy(tauri::ActivationPolicy::Accessory);
+
+            // 自愈开机自启：LaunchAgent plist 记的是 App 绝对路径。用户挪 App、
+            // 换目录、我们打新包覆盖…都可能导致 plist 里路径指向已删除的旧位置，
+            // launchd 静默 load fail。每次启动自检并修正，用户无感。
+            #[cfg(target_os = "macos")]
+            fix_autostart_plist_if_stale();
 
             let data_dir = app
                 .path()
