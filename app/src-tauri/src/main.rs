@@ -782,6 +782,20 @@ fn main() {
             allow_pet_over_fullscreen(&handle);
             position_pet_beside_panel(&handle);
 
+            // 监听 pet 窗口移动事件，emit 给前端触发 orientation 切换。
+            // 用后端原生 Moved 事件替代前端 window.screenY 轮询（webview 里那个不实时同步）。
+            if let Some(pet_win) = handle.get_webview_window("pet") {
+                let handle_for_move = handle.clone();
+                pet_win.on_window_event(move |event| {
+                    if let tauri::WindowEvent::Moved(pos) = event {
+                        let _ = handle_for_move.emit(
+                            "pet-moved",
+                            serde_json::json!({ "x": pos.x, "y": pos.y }),
+                        );
+                    }
+                });
+            }
+
             // 托盘菜单
             let open_i = MenuItemBuilder::with_id("open", "打开面板").build(app)?;
             let toggle_pet_i =
