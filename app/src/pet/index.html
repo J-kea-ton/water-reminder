@@ -491,25 +491,31 @@
   // 桌宠上下自适应：桌宠在屏幕上半时改「pet-top」布局（桌宠贴窗口顶、气泡向下吐），
   // 反之默认布局（桌宠贴窗口底、气泡向上冒）。切换时同步补偿窗口 y，避免桌宠视觉跳变。
   const PET_FLIP_DELTA = 118; // wrap 高 300 - petbox 高 178 - 上下各 2 边距
+  // 冷却锁：切换后 1200ms 内忽略 Moved 事件——避免 pet_shift_y 触发的
+  // 新 Moved 又倒回判定成立、来回切换死循环（v0.6.13 就是这个 bug）
+  let orientationCoolUntil = 0;
+  let orientationDebounceT = null;
   async function updatePetOrientation(winY){
-    if(isRetracted) return; // 缩边模式不切换
+    if(isRetracted) return;
     const screenH = window.screen.availHeight;
     const winTop = (typeof winY === 'number') ? winY : window.screenY;
     const petCenterY = winTop + wrap.offsetHeight / 2;
     const shouldTop = petCenterY < screenH / 2;
     const isTop = wrap.classList.contains('pet-top');
-    if(shouldTop === isTop) return; // 已经正确
+    if(shouldTop === isTop) return;
     wrap.classList.toggle('pet-top', shouldTop);
+    orientationCoolUntil = Date.now() + 1200; // 切完锁 1.2 秒
     try{ await invoke('pet_shift_y', { dy: shouldTop ? PET_FLIP_DELTA : -PET_FLIP_DELTA }); }catch(e){}
   }
-  // 后端 emit 的 pet-moved 事件带精确 y 值（macOS 原生 WindowEvent::Moved），
-  // 比 webview 里的 window.screenY 可靠——那个在 tauri v2 里不实时同步。
+  // Moved 事件在拖动过程中会连发几十次，用 debounce 只在拖动稍停时判定一次
   listen('pet-moved', (e)=>{
-    if(e && e.payload && typeof e.payload.y === 'number'){
-      updatePetOrientation(e.payload.y);
-    }
+    if(!e || !e.payload || typeof e.payload.y !== 'number') return;
+    if(Date.now() < orientationCoolUntil) return; // 冷却期忽略
+    const y = e.payload.y;
+    clearTimeout(orientationDebounceT);
+    orientationDebounceT = setTimeout(()=> updatePetOrientation(y), 300);
   });
-  // 启动后跑一次初始判定（此时窗口位置已确定）
+  // 启动后跑一次初始判定
   setTimeout(()=> updatePetOrientation(), 800);
 
   // 自定义饮水量滚动选择器（桌宠内嵌，点「自定义」直接在气泡窗里选，不跳面板）
